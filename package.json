@@ -1,0 +1,17 @@
+{
+  "name": "multi-tenant-project-management",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter api dev",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^12.15.0",
+      "onFail": "download"
+    }
+  }
+}
