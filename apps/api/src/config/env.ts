@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const envScheme = z.object({
-  NODE_END: z
+  NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),
 
