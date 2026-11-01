@@ -1,4 +1,3 @@
-
 name: CI
 
 on:
@@ -34,6 +33,11 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter api exec prisma generate --config prisma7.config.ts
+        env:
+          DATABASE_URL: postgresql://app:ci-placeholder@localhost:5432/project_management?schema=public
 
       - name: Lint
         run: pnpm lint
