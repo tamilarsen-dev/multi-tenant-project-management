@@ -13,6 +13,15 @@ function isMalformedJsonError(err: unknown): boolean {
   );
 }
 
+function isPayloadTooLargeError(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "type" in err &&
+    err.type === "entity.too.large"
+  );
+}
+
 export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   if (res.headersSent) {
     return next(err);
@@ -23,6 +32,15 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
       error: {
         code: "INVALID_JSON",
         message: "Request body contains invalid JSON",
+      },
+    });
+  }
+
+  if (isPayloadTooLargeError(err)) {
+    return res.status(413).json({
+      error: {
+        code: "PAYLOAD_TOO_LARGE",
+        message: "Request body exceeds the allowed size",
       },
     });
   }
@@ -50,7 +68,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
       {
         err,
         method: req.method,
-        url: req.originalUrl,
+        url: req.path,
         statusCode: err.statusCode,
         code: err.code,
       },
@@ -70,7 +88,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     {
       err,
       method: req.method,
-      url: req.originalUrl,
+      url: req.path,
     },
     "Unexpected error",
   );

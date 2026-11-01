@@ -9,7 +9,7 @@ export const requestLogger = pinoHttp({
       return {
         id: req.id,
         method: req.method,
-        url: req.url,
+        url: req.path,
       };
     },
 

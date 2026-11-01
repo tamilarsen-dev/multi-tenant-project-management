@@ -1,5 +1,12 @@
 allowBuilds:
+  builds: true
   esbuild: true
-
 packages:
   - "apps/*"
+permissions:
+  '@prisma/engines':
+    build: true
+  builds:
+    skills: true
+  prisma:
+    build: true

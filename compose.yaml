@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:18-alpine
+    container_name: project-management-db
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: project_management
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_docker_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d project_management"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_docker_data:
