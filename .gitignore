@@ -6,6 +6,9 @@ coverage/
 !.env.example
 *.log
 .DS_Store
+docs/
+!/docs/planning
+!/docs/README.md
 
 **/.agents/
 **/.claude/
