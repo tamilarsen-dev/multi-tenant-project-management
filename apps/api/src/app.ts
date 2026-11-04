@@ -1,4 +1,6 @@
 import express from "express";
+import swaggerUi from "swagger-ui-express";
+import { swaggerDocument } from "./config/swagger.js";
 
 import { securityHeaders } from "./middleware/security-headers.js";
 import { corsPolicy } from "./middleware/cors.js";
@@ -7,6 +9,8 @@ import { errorHandler } from "./middleware/error-handler.js";
 import { notFoundHandler } from "./middleware/not-found.js";
 import { requestLogger } from "./middleware/request-logger.js";
 import { AppSuccess } from "./common/http/app-success.js";
+
+import authRoutes from "./modules/identity/auth.routes.js";
 
 export const app = express();
 
@@ -23,6 +27,9 @@ app.get("/healthz", (_req, res) => {
 });
 
 // routes
+app.use("/api/v1/auth", authRoutes);
+
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(notFoundHandler);
 app.use(errorHandler);
