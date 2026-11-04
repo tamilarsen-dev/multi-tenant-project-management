@@ -7,6 +7,10 @@ describe("GET /healthz", () => {
     const res = await request(app).get("/healthz");
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ status: "ok" });
+    expect(res.body).toEqual({
+      data: {
+        status: "ok",
+      },
+    });
   });
 });

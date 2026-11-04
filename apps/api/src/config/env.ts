@@ -6,6 +6,12 @@ const envSchema = z.object({
     .default("development"),
 
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+
+  CORS_ORIGINS: z
+    .string()
+    .default("http://localhost:5173")
+    .transform((value) => value.split(",").map((origin) => origin.trim()))
+    .pipe(z.array(z.url().min(1))),
 });
 
 const databaseEnvSchema = z.object({

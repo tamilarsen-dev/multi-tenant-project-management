@@ -69,7 +69,7 @@ describe("API error handling", () => {
 
   it("returns 413 when request body exceeds the size limit", async () => {
     const largePayload = JSON.stringify({
-      data: "a".repeat(110 * 1024),
+      data: "a".repeat(2 * 1024 * 1024),
     });
 
     const res = await request(app)

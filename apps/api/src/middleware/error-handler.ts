@@ -1,7 +1,7 @@
 import type { ErrorRequestHandler } from "express";
 import { ZodError } from "zod";
 
-import { AppError } from "../errors/app-error.js";
+import { AppError } from "../common/http/app-error.js";
 import { logger } from "../config/logger.js";
 
 function isMalformedJsonError(err: unknown): boolean {
@@ -67,6 +67,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     logger[logMethod](
       {
         err,
+        requestId: req.id,
         method: req.method,
         url: req.path,
         statusCode: err.statusCode,
@@ -87,6 +88,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   logger.error(
     {
       err,
+      requestId: req.id,
       method: req.method,
       url: req.path,
     },
