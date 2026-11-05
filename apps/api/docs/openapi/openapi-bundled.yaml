@@ -1,0 +1,543 @@
+openapi: 3.1.0
+info:
+  title: Project Management API
+  version: 1.0.0
+  description: |
+    # Introduction
+
+    The Project Management API provides a backend interface for managing
+    organizations, memberships, invitations, projects, and issues.
+
+    It is designed around a multi-tenant architecture, where users can
+    collaborate within organizations and manage resources belonging to
+    those organizations.
+
+    ## What can you do?
+
+    The API is organized into the following functional areas:
+
+    - **Authentication** — Register and authenticate user accounts.
+    - **Organizations** — Manage organization resources.
+    - **Memberships** — Manage user membership within organizations.
+    - **Invitations** — Invite users to join organizations.
+    - **Projects** — Manage projects within an organization.
+    - **Issues** — Manage work items associated with projects.
+    - **Health** — Check API availability.
+
+    ## Getting started
+
+    To start integrating with the API:
+
+    1. Review the available environments and base URLs.
+    2. Understand the authentication flow.
+    3. Authenticate when accessing protected endpoints.
+    4. Include the required headers and request parameters.
+    5. Handle success and error responses according to the API conventions.
+
+    ## Authentication
+
+    Some endpoints are publicly accessible, while others require authentication.
+
+    Protected endpoints use the authentication mechanism described in the
+    Authentication Guide. Each endpoint specifies its authentication
+    requirements in the API Reference.
+
+    ## Documentation structure
+
+    Use the documentation sections to find the information you need:
+
+    - **Getting Started** — Guides explaining API usage, authentication,
+      conventions, and multi-tenancy.
+    - **API Reference** — Technical specifications for each endpoint,
+      including parameters, request bodies, responses, and error codes.
+    - **Models & Schemas** — Definitions of reusable data structures
+      used throughout the API.
+
+    ## API versioning
+
+    The current API uses the `/api/v1` URL prefix for versioned endpoints.
+    The version prefix allows future API versions to evolve independently.
+servers:
+  - url: http://localhost:3000
+    description: Local development
+tags:
+  - name: Health
+    description: API health monitoring
+  - name: Authentication
+    description: User registration, login, logout, and session management
+  - name: Organizations
+    description: Organization creation and management
+  - name: Memberships
+    description: Organization membership management
+  - name: Invitations
+    description: Organization invitations
+  - name: Projects
+    description: Project management
+  - name: Issues
+    description: Issue tracking and management
+x-tagGroups:
+  - name: Core API
+    tags:
+      - Health
+      - Authentication
+  - name: Organization Management
+    tags:
+      - Organizations
+      - Memberships
+      - Invitations
+  - name: Project Management
+    tags:
+      - Projects
+      - Issues
+paths:
+  /healthz:
+    get:
+      tags:
+        - Health
+      summary: Check API health
+      description: |
+        Checks whether the API process is running and able
+        to respond to HTTP requests.
+      operationId: getHealth
+      responses:
+        "200":
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                data:
+                  status: ok
+  /api/v1/auth/register:
+    $ref: "#/x-ext/dfb48ce/register"
+  /api/v1/auth/login:
+    $ref: "#/x-ext/dfb48ce/login"
+  /api/v1/auth/me:
+    $ref: "#/x-ext/dfb48ce/me"
+  /api/v1/auth/logout:
+    $ref: "#/x-ext/dfb48ce/logout"
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "#/x-ext/4131fd1/BearerAuth"
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - status
+          properties:
+            status:
+              type: string
+              enum:
+                - ok
+              example: ok
+    ErrorResponse:
+      $ref: "#/x-ext/146d2f2/ErrorResponse"
+    SuccessResponse:
+      $ref: "#/x-ext/415bd9d/SuccessResponse"
+    CollectionResponse:
+      $ref: "#/x-ext/415bd9d/CollectionResponse"
+    PaginationMeta:
+      $ref: "#/x-ext/1e71f76/PaginationMeta"
+    RegisterRequest:
+      $ref: "#/x-ext/f36ff03/RegisterRequest"
+    LoginRequest:
+      $ref: "#/x-ext/f36ff03/LoginRequest"
+    AuthUser:
+      $ref: "#/x-ext/f36ff03/AuthUser"
+    RegisteredUser:
+      $ref: "#/x-ext/f36ff03/RegisteredUser"
+    AuthSession:
+      $ref: "#/x-ext/f36ff03/AuthSession"
+    RegisterResponse:
+      $ref: "#/x-ext/f36ff03/RegisterResponse"
+    LoginResponse:
+      $ref: "#/x-ext/f36ff03/LoginResponse"
+x-ext:
+  f36ff03:
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - password
+        - displayName
+      properties:
+        email:
+          type: string
+          format: email
+          description: |
+            User email address. The server trims whitespace and
+            normalizes the value to lowercase before storing it.
+          example: developer@example.com
+        password:
+          type: string
+          format: password
+          minLength: 12
+          maxLength: 128
+          description: |
+            Password must contain between 12 and 128 characters.
+            The server does not trim or normalize the password.
+          example: Correct-Horse-42!
+        displayName:
+          type: string
+          minLength: 1
+          description: User's display name.
+          example: Alex Morgan
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address. The server normalizes it to lowercase.
+          example: developer@example.com
+        password:
+          type: string
+          format: password
+          description: User's password.
+          example: Correct-Horse-42!
+    AuthUser:
+      type: object
+      required:
+        - id
+        - email
+        - displayName
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        email:
+          type: string
+          format: email
+          example: developer@example.com
+        displayName:
+          type: string
+          example: Alex Morgan
+    RegisteredUser:
+      allOf:
+        - $ref: "#/x-ext/f36ff03/AuthUser"
+        - type: object
+          required:
+            - createdAt
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+              example: 2026-11-05T06:00:00.000Z
+    AuthSession:
+      type: object
+      required:
+        - id
+        - accessToken
+        - tokenType
+        - expiresAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        accessToken:
+          type: string
+          description: Opaque session token. Store securely on the client.
+          example: opaque-session-token
+        tokenType:
+          type: string
+          enum:
+            - Bearer
+          example: Bearer
+        expiresAt:
+          type: string
+          format: date-time
+          description: Session expiration timestamp. Sessions expire after seven days.
+          example: 2026-11-12T06:00:00.000Z
+    RegisterResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - user
+            - sessionToken
+          properties:
+            user:
+              $ref: "#/x-ext/f36ff03/RegisteredUser"
+            sessionToken:
+              type: string
+              description: Opaque session token used for Bearer authentication.
+    LoginResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - user
+            - sessionToken
+          properties:
+            user:
+              $ref: "#/x-ext/f36ff03/AuthUser"
+            sessionToken:
+              type: string
+              description: Opaque session token used for Bearer authentication.
+  146d2f2:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              description: Application-specific error code.
+              enum:
+                - INVALID_JSON
+                - VALIDATION_ERROR
+                - UNAUTHENTICATED
+                - FORBIDDEN
+                - NOT_FOUND
+                - CONFLICT
+                - PAYLOAD_TOO_LARGE
+                - INTERNAL_SERVER_ERROR
+                - RATE_LIMIT_EXCEEDED
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              description: Human-readable error message.
+              example: Request validation failed
+            details:
+              type: object
+              description: Additional error information.
+              additionalProperties: true
+              example: {}
+  dfb48ce:
+    register:
+      post:
+        tags:
+          - Authentication
+        summary: Register a new user
+        description: |
+          Creates a user account and an authenticated session.
+
+          The email address is trimmed and normalized to lowercase.
+          Email addresses must be globally unique.
+
+          The password is not trimmed or normalized.
+        operationId: registerUser
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/x-ext/f36ff03/RegisterRequest"
+              example:
+                email: developer@example.com
+                password: Correct-Horse-42!
+                displayName: Alex Morgan
+        responses:
+          "201":
+            description: User registered successfully.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/x-ext/f36ff03/RegisterResponse"
+          "400":
+            description: Request validation failed.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/x-ext/146d2f2/ErrorResponse"
+          "409":
+            description: Email address is already registered.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/x-ext/146d2f2/ErrorResponse"
+                example:
+                  error:
+                    code: EMAIL_ALREADY_EXISTS
+                    message: An account with this email already exists.
+          "500":
+            description: Unexpected server error.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/x-ext/146d2f2/ErrorResponse"
+    login:
+      post:
+        tags:
+          - Authentication
+        summary: Authenticate a user
+        description: |
+          Authenticates a user using email and password.
+
+          Successful authentication creates a new session.
+          Multiple concurrent sessions are supported.
+
+          Invalid email or password produces the same error response
+          to avoid revealing whether an account exists.
+        operationId: loginUser
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/x-ext/f36ff03/LoginRequest"
+              example:
+                email: developer@example.com
+                password: Correct-Horse-42!
+        responses:
+          "200":
+            description: User authenticated successfully.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/x-ext/f36ff03/LoginResponse"
+          "400":
+            description: Request validation failed.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/x-ext/146d2f2/ErrorResponse"
+          "401":
+            description: Invalid email or password.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/x-ext/146d2f2/ErrorResponse"
+                example:
+                  error:
+                    code: INVALID_CREDENTIALS
+                    message: Invalid email or password.
+          "500":
+            description: Unexpected server error.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/x-ext/146d2f2/ErrorResponse"
+    me:
+      get:
+        tags:
+          - Authentication
+        summary: Get current user
+        description: |
+          Returns the authenticated user's information.
+
+          Requires a valid Bearer session token.
+        operationId: getCurrentUser
+        security:
+          - BearerAuth: []
+        responses:
+          "200":
+            description: Current user retrieved successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: object
+                      required:
+                        - user
+                      properties:
+                        user:
+                          $ref: "#/x-ext/f36ff03/AuthUser"
+          "401":
+            description: Authentication is missing, invalid, expired, or revoked
+            content:
+              application/json:
+                schema:
+                  $ref: "#/x-ext/146d2f2/ErrorResponse"
+    logout:
+      post:
+        tags:
+          - Authentication
+        summary: Log out current session
+        description: |
+          Revokes the session associated with the supplied Bearer token.
+          The revoked session can no longer authenticate requests.
+        operationId: logoutCurrentSession
+        security:
+          - BearerAuth: []
+        responses:
+          "204":
+            description: Session revoked successfully
+          "401":
+            description: Authentication is missing, invalid, expired, or revoked
+            content:
+              application/json:
+                schema:
+                  $ref: "#/x-ext/146d2f2/ErrorResponse"
+  4131fd1:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Opaque Session Token
+      description: |
+        Authentication using an opaque session token.
+
+        Include the token in the Authorization header:
+
+        Authorization: Bearer <session_token>
+  1e71f76:
+    PaginationMeta:
+      type: object
+      required:
+        - nextCursor
+        - hasMore
+      properties:
+        nextCursor:
+          type:
+            - string
+            - "null"
+          description: Cursor for retrieving the next page.
+          example: null
+        hasMore:
+          type: boolean
+          description: Indicates whether more records are available.
+          example: false
+  415bd9d:
+    SuccessResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          description: Response payload.
+          type: object
+          additionalProperties: true
+    CollectionResponse:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          description: Collection of resources.
+          items:
+            type: object
+            additionalProperties: true
+        meta:
+          $ref: "#/x-ext/1e71f76/PaginationMeta"

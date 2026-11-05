@@ -1,0 +1,10 @@
+BearerAuth:
+  type: http
+  scheme: bearer
+  bearerFormat: Opaque Session Token
+  description: |
+    Authentication using an opaque session token.
+
+    Include the token in the Authorization header:
+
+    Authorization: Bearer <session_token>

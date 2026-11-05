@@ -1,0 +1,147 @@
+RegisterRequest:
+  type: object
+  additionalProperties: false
+  required:
+    - email
+    - password
+    - displayName
+  properties:
+    email:
+      type: string
+      format: email
+      description: |
+        User email address. The server trims whitespace and
+        normalizes the value to lowercase before storing it.
+      example: developer@example.com
+
+    password:
+      type: string
+      format: password
+      minLength: 12
+      maxLength: 128
+      description: |
+        Password must contain between 12 and 128 characters.
+        The server does not trim or normalize the password.
+      example: "Correct-Horse-42!"
+
+    displayName:
+      type: string
+      minLength: 1
+      description: User's display name.
+      example: Alex Morgan
+
+LoginRequest:
+  type: object
+  additionalProperties: false
+  required:
+    - email
+    - password
+  properties:
+    email:
+      type: string
+      format: email
+      description: Email address. The server normalizes it to lowercase.
+      example: developer@example.com
+
+    password:
+      type: string
+      format: password
+      description: User's password.
+      example: "Correct-Horse-42!"
+
+AuthUser:
+  type: object
+  required:
+    - id
+    - email
+    - displayName
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440000
+
+    email:
+      type: string
+      format: email
+      example: developer@example.com
+
+    displayName:
+      type: string
+      example: Alex Morgan
+
+RegisteredUser:
+  allOf:
+    - $ref: "#/AuthUser"
+    - type: object
+      required:
+        - createdAt
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-11-05T06:00:00.000Z"
+
+AuthSession:
+  type: object
+  required:
+    - id
+    - accessToken
+    - tokenType
+    - expiresAt
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440001
+
+    accessToken:
+      type: string
+      description: Opaque session token. Store securely on the client.
+      example: "opaque-session-token"
+
+    tokenType:
+      type: string
+      enum:
+        - Bearer
+      example: Bearer
+
+    expiresAt:
+      type: string
+      format: date-time
+      description: Session expiration timestamp. Sessions expire after seven days.
+      example: "2026-11-12T06:00:00.000Z"
+
+RegisterResponse:
+  type: object
+  required:
+    - data
+  properties:
+    data:
+      type: object
+      required:
+        - user
+        - sessionToken
+      properties:
+        user:
+          $ref: "#/RegisteredUser"
+        sessionToken:
+          type: string
+          description: Opaque session token used for Bearer authentication.
+
+LoginResponse:
+  type: object
+  required:
+    - data
+  properties:
+    data:
+      type: object
+      required:
+        - user
+        - sessionToken
+      properties:
+        user:
+          $ref: "#/AuthUser"
+        sessionToken:
+          type: string
+          description: Opaque session token used for Bearer authentication.

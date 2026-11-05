@@ -80,7 +80,9 @@ export const authService = {
     const user = await userRepository.findByEmail(email);
 
     if (!user) {
-      throw new AppError("UNAUTHENTICATED");
+      throw new AppError("UNAUTHENTICATED", {
+        message: "Invalid email or password",
+      });
     }
 
     const isPasswordValid = await verifyPassword(
@@ -89,7 +91,9 @@ export const authService = {
     );
 
     if (!isPasswordValid) {
-      throw new AppError("UNAUTHENTICATED");
+      throw new AppError("UNAUTHENTICATED", {
+        message: "Invalid email or password",
+      });
     }
 
     const sessionToken = generateSessionToken();

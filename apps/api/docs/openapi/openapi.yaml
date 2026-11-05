@@ -1,0 +1,190 @@
+openapi: 3.1.0
+
+info:
+  title: Project Management API
+  version: 1.0.0
+  description: |
+    # Introduction
+
+    The Project Management API provides a backend interface for managing
+    organizations, memberships, invitations, projects, and issues.
+
+    It is designed around a multi-tenant architecture, where users can
+    collaborate within organizations and manage resources belonging to
+    those organizations.
+
+    ## What can you do?
+
+    The API is organized into the following functional areas:
+
+    - **Authentication** — Register and authenticate user accounts.
+    - **Organizations** — Manage organization resources.
+    - **Memberships** — Manage user membership within organizations.
+    - **Invitations** — Invite users to join organizations.
+    - **Projects** — Manage projects within an organization.
+    - **Issues** — Manage work items associated with projects.
+    - **Health** — Check API availability.
+
+    ## Getting started
+
+    To start integrating with the API:
+
+    1. Review the available environments and base URLs.
+    2. Understand the authentication flow.
+    3. Authenticate when accessing protected endpoints.
+    4. Include the required headers and request parameters.
+    5. Handle success and error responses according to the API conventions.
+
+    ## Authentication
+
+    Some endpoints are publicly accessible, while others require authentication.
+
+    Protected endpoints use the authentication mechanism described in the
+    Authentication Guide. Each endpoint specifies its authentication
+    requirements in the API Reference.
+
+    ## Documentation structure
+
+    Use the documentation sections to find the information you need:
+
+    - **Getting Started** — Guides explaining API usage, authentication,
+      conventions, and multi-tenancy.
+    - **API Reference** — Technical specifications for each endpoint,
+      including parameters, request bodies, responses, and error codes.
+    - **Models & Schemas** — Definitions of reusable data structures
+      used throughout the API.
+
+    ## API versioning
+
+    The current API uses the `/api/v1` URL prefix for versioned endpoints.
+    The version prefix allows future API versions to evolve independently.
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+
+tags:
+  - name: Health
+    description: API health monitoring
+
+  - name: Authentication
+    description: User registration, login, logout, and session management
+
+  - name: Organizations
+    description: Organization creation and management
+
+  - name: Memberships
+    description: Organization membership management
+
+  - name: Invitations
+    description: Organization invitations
+
+  - name: Projects
+    description: Project management
+
+  - name: Issues
+    description: Issue tracking and management
+
+x-tagGroups:
+  - name: Core API
+    tags:
+      - Health
+      - Authentication
+
+  - name: Organization Management
+    tags:
+      - Organizations
+      - Memberships
+      - Invitations
+
+  - name: Project Management
+    tags:
+      - Projects
+      - Issues
+
+paths:
+  /healthz:
+    get:
+      tags:
+        - Health
+      summary: Check API health
+      description: |
+        Checks whether the API process is running and able
+        to respond to HTTP requests.
+      operationId: getHealth
+      responses:
+        "200":
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                data:
+                  status: ok
+  /api/v1/auth/register:
+    $ref: "./paths/auth.yaml#/register"
+
+  /api/v1/auth/login:
+    $ref: "./paths/auth.yaml#/login"
+
+  /api/v1/auth/me:
+    $ref: "./paths/auth.yaml#/me"
+
+  /api/v1/auth/logout:
+    $ref: "./paths/auth.yaml#/logout"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "./components/security-schemes.yaml#/BearerAuth"
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - status
+          properties:
+            status:
+              type: string
+              enum:
+                - ok
+              example: ok
+
+    ErrorResponse:
+      $ref: "./components/schemas/error.yaml#/ErrorResponse"
+
+    SuccessResponse:
+      $ref: "./components/schemas/success.yaml#/SuccessResponse"
+
+    CollectionResponse:
+      $ref: "./components/schemas/success.yaml#/CollectionResponse"
+
+    PaginationMeta:
+      $ref: "./components/schemas/pagination.yaml#/PaginationMeta"
+
+    RegisterRequest:
+      $ref: "./components/schemas/auth.yaml#/RegisterRequest"
+
+    LoginRequest:
+      $ref: "./components/schemas/auth.yaml#/LoginRequest"
+
+    AuthUser:
+      $ref: "./components/schemas/auth.yaml#/AuthUser"
+
+    RegisteredUser:
+      $ref: "./components/schemas/auth.yaml#/RegisteredUser"
+
+    AuthSession:
+      $ref: "./components/schemas/auth.yaml#/AuthSession"
+
+    RegisterResponse:
+      $ref: "./components/schemas/auth.yaml#/RegisterResponse"
+
+    LoginResponse:
+      $ref: "./components/schemas/auth.yaml#/LoginResponse"

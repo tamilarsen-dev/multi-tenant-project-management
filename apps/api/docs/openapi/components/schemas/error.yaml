@@ -1,0 +1,36 @@
+ErrorResponse:
+  type: object
+  required:
+    - error
+  properties:
+    error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Application-specific error code.
+          enum:
+            - INVALID_JSON
+            - VALIDATION_ERROR
+            - UNAUTHENTICATED
+            - FORBIDDEN
+            - NOT_FOUND
+            - CONFLICT
+            - PAYLOAD_TOO_LARGE
+            - INTERNAL_SERVER_ERROR
+            - RATE_LIMIT_EXCEEDED
+          example: VALIDATION_ERROR
+
+        message:
+          type: string
+          description: Human-readable error message.
+          example: Request validation failed
+
+        details:
+          type: object
+          description: Additional error information.
+          additionalProperties: true
+          example: {}

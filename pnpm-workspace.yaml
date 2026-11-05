@@ -1,12 +1,14 @@
 allowBuilds:
+  '@quobix/vacuum': set this to true or false
   '@scarf/scarf': set this to true or false
-  argon2: set this to true or false
   builds: true
   esbuild: true
 packages:
   - "apps/*"
 permissions:
-  '@prisma/engines':
+  "@prisma/engines":
+    build: true
+  argon2:
     build: true
   builds:
     skills: true

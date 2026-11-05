@@ -1,0 +1,17 @@
+PaginationMeta:
+  type: object
+  required:
+    - nextCursor
+    - hasMore
+  properties:
+    nextCursor:
+      type:
+        - string
+        - "null"
+      description: Cursor for retrieving the next page.
+      example: null
+
+    hasMore:
+      type: boolean
+      description: Indicates whether more records are available.
+      example: false

@@ -1,0 +1,168 @@
+register:
+  post:
+    tags:
+      - Authentication
+    summary: Register a new user
+    description: |
+      Creates a user account and an authenticated session.
+
+      The email address is trimmed and normalized to lowercase.
+      Email addresses must be globally unique.
+
+      The password is not trimmed or normalized.
+    operationId: registerUser
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/auth.yaml#/RegisterRequest"
+          example:
+            email: developer@example.com
+            password: "Correct-Horse-42!"
+            displayName: Alex Morgan
+    responses:
+      "201":
+        description: User registered successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/auth.yaml#/RegisterResponse"
+
+      "400":
+        description: Request validation failed.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/ErrorResponse"
+
+      "409":
+        description: Email address is already registered.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/ErrorResponse"
+            example:
+              error:
+                code: EMAIL_ALREADY_EXISTS
+                message: An account with this email already exists.
+
+      "500":
+        description: Unexpected server error.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/ErrorResponse"
+
+login:
+  post:
+    tags:
+      - Authentication
+    summary: Authenticate a user
+    description: |
+      Authenticates a user using email and password.
+
+      Successful authentication creates a new session.
+      Multiple concurrent sessions are supported.
+
+      Invalid email or password produces the same error response
+      to avoid revealing whether an account exists.
+    operationId: loginUser
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/auth.yaml#/LoginRequest"
+          example:
+            email: developer@example.com
+            password: "Correct-Horse-42!"
+    responses:
+      "200":
+        description: User authenticated successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/auth.yaml#/LoginResponse"
+
+      "400":
+        description: Request validation failed.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/ErrorResponse"
+
+      "401":
+        description: Invalid email or password.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/ErrorResponse"
+            example:
+              error:
+                code: INVALID_CREDENTIALS
+                message: Invalid email or password.
+
+      "500":
+        description: Unexpected server error.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/ErrorResponse"
+
+me:
+  get:
+    tags:
+      - Authentication
+    summary: Get current user
+    description: |
+      Returns the authenticated user's information.
+
+      Requires a valid Bearer session token.
+    operationId: getCurrentUser
+    security:
+      - BearerAuth: []
+    responses:
+      "200":
+        description: Current user retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - user
+                  properties:
+                    user:
+                      $ref: "../components/schemas/auth.yaml#/AuthUser"
+      "401":
+        description: Authentication is missing, invalid, expired, or revoked
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/ErrorResponse"
+
+logout:
+  post:
+    tags:
+      - Authentication
+    summary: Log out current session
+    description: |
+      Revokes the session associated with the supplied Bearer token.
+      The revoked session can no longer authenticate requests.
+    operationId: logoutCurrentSession
+    security:
+      - BearerAuth: []
+    responses:
+      "204":
+        description: Session revoked successfully
+      "401":
+        description: Authentication is missing, invalid, expired, or revoked
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/ErrorResponse"

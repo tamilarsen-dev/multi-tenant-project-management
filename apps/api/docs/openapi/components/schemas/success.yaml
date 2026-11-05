@@ -1,0 +1,25 @@
+SuccessResponse:
+  type: object
+  required:
+    - data
+  properties:
+    data:
+      description: Response payload.
+      type: object
+      additionalProperties: true
+
+CollectionResponse:
+  type: object
+  required:
+    - data
+    - meta
+  properties:
+    data:
+      type: array
+      description: Collection of resources.
+      items:
+        type: object
+        additionalProperties: true
+
+    meta:
+      $ref: "./pagination.yaml#/PaginationMeta"
