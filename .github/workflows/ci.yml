@@ -11,33 +11,65 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality-checks:
     name: API Quality Checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: ci-placeholder
+          POSTGRES_DB: project_management_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d project_management_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://app:ci-placeholder@localhost:5432/project_management_test?schema=public
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Node.js and pnpm
+        uses: pnpm/setup@v3
         with:
           version: 12.15.0
+          runtime: node@24
+          cache: true
+          install: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
+      - name: Verify toolchain
+        run: |
+          node --version
+          pnpm --version
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma Client
         run: pnpm --filter api exec prisma generate --config prisma7.config.ts
-        env:
-          DATABASE_URL: postgresql://app:ci-placeholder@localhost:5432/project_management?schema=public
+
+      - name: Prepare test environment
+        run: |
+          printf '%s\n' \
+            'DATABASE_URL=postgresql://app:ci-placeholder@localhost:5432/project_management_test?schema=public' \
+            > apps/api/.env.test
+
+      - name: Apply database migrations
+        run: pnpm --filter api exec prisma migrate deploy --config prisma7.config.ts
 
       - name: Lint
         run: pnpm lint
