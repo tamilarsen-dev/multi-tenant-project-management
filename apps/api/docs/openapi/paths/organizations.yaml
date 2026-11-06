@@ -1,0 +1,83 @@
+create:
+  post:
+    tags:
+      - Organizations
+    summary: Create an organization
+    description: |
+      Creates a new organization.
+
+      The authenticated user is automatically assigned the OWNER role
+      in the newly created organization.
+
+      Organization creation and owner membership assignment are
+      performed atomically within a database transaction.
+
+      Leading and trailing whitespace in the organization name
+      is trimmed before validation and storage.
+    operationId: createOrganization
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/organizations.yaml#/CreateOrganizationRequest"
+          example:
+            name: Acme Corporation
+    responses:
+      "201":
+        description: Organization created successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/organizations.yaml#/CreateOrganizationResponse"
+            example:
+              data:
+                organization:
+                  id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Acme Corporation
+                  createdAt: "2026-11-06T06:00:00.000Z"
+                  updatedAt: "2026-11-06T06:00:00.000Z"
+
+      "400":
+        description: Request validation failed.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/ErrorResponse"
+            example:
+              error:
+                code: VALIDATION_ERROR
+                message: Request validation failed
+                details:
+                  issues:
+                    - code: too_small
+                      origin: string
+                      minimum: 1
+                      inclusive: true
+                      path:
+                        - name
+                      message: "Too small: expected string to have >=1 characters"
+
+      "401":
+        description: Authentication is missing, invalid, expired, or revoked.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/ErrorResponse"
+            example:
+              error:
+                code: UNAUTHENTICATED
+                message: Authentication is required
+
+      "500":
+        description: Unexpected server error.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/ErrorResponse"
+            example:
+              error:
+                code: INTERNAL_SERVER_ERROR
+                message: An unexpected error occurred

@@ -23,6 +23,8 @@ model User {
 
   sessions Session[]
 
+  memberships Membership[]
+
   @@map("users")
 }
 
@@ -40,4 +42,39 @@ model Session {
   @@index([userId])
   @@index([expiresAt])
   @@map("sessions")
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  MEMBER
+
+  @@map("organization_role")
+}
+
+model Organization {
+  id   String @id @default(uuid()) @db.Uuid
+  name String @db.VarChar(100)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  memberships Membership[]
+
+  @@map("organizations")
+}
+
+model Membership {
+  organizationId String           @map("organization_id") @db.Uuid
+  userId         String           @map("user_id") @db.Uuid
+  role           OrganizationRole @default(MEMBER)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, userId])
+  @@index([userId])
+  @@map("memberships")
 }

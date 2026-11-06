@@ -1,11 +1,11 @@
-// multi-tenant-project-management/apps/api/src/middleware/api-docs.ts
-
 import { apiReference } from "@scalar/express-api-reference";
 import express, { Router } from "express";
 import { fileURLToPath } from "node:url";
 
 import type { RequestHandler } from "express";
 import type { SecurityResponse } from "./security-headers.js";
+
+import { env } from "../config/env.js";
 
 const router = Router();
 
@@ -39,11 +39,14 @@ router.use((req, res, next) => {
 
     // API interaction
     hideClientButton: false,
-    hideTestRequestButton: false,
+    hideTestRequestButton: env.NODE_ENV === "production",
     defaultHttpClient: {
-      targetKey: "shell",
-      clientKey: "curl",
+      targetKey: "node",
+      clientKey: "fetch",
     },
+
+    // Client Libraries
+    featuredClients: ["shell/curl", "node/fetch", "python/requests"],
 
     // Operation details
     showOperationId: true,
@@ -54,14 +57,14 @@ router.use((req, res, next) => {
     // Models and schemas
     hideModels: false,
     hideModelNames: false,
-    modelsSectionLabel: "Models",
+    modelsSectionLabel: "Schemas",
     expandAllModelSections: false,
     expandAllSchemaProperties: false,
     orderRequiredPropertiesFirst: true,
     orderSchemaPropertiesBy: "preserve",
 
     // Document download
-    documentDownloadType: "none",
+    documentDownloadType: "both",
 
     // Security
     nonce,

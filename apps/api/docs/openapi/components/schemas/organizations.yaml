@@ -1,0 +1,56 @@
+CreateOrganizationRequest:
+  type: object
+  description: |
+    Unknown properties are stripped by the server.
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: |
+        Organization name. The server trims leading and trailing
+        whitespace before validation and storage.
+        The resulting name must contain between 1 and 100 characters.
+      example: Acme Corporation
+
+Organization:
+  type: object
+  required:
+    - id
+    - name
+    - createdAt
+    - updatedAt
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440000
+
+    name:
+      type: string
+      example: Acme Corporation
+
+    createdAt:
+      type: string
+      format: date-time
+      example: "2026-11-06T06:00:00.000Z"
+
+    updatedAt:
+      type: string
+      format: date-time
+      example: "2026-11-06T06:00:00.000Z"
+
+CreateOrganizationResponse:
+  type: object
+  required:
+    - data
+  properties:
+    data:
+      type: object
+      required:
+        - organization
+      properties:
+        organization:
+          $ref: "#/Organization"

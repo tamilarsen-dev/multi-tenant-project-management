@@ -10,6 +10,7 @@ register:
       Email addresses must be globally unique.
 
       The password is not trimmed or normalized.
+      The display name is not trimmed or normalized.
     operationId: registerUser
     requestBody:
       required: true
@@ -28,6 +29,14 @@ register:
           application/json:
             schema:
               $ref: "../components/schemas/auth.yaml#/RegisterResponse"
+            example:
+              data:
+                user:
+                  id: 550e8400-e29b-41d4-a716-446655440000
+                  email: developer@example.com
+                  displayName: Alex Morgan
+                  createdAt: "2026-11-05T06:00:00.000Z"
+                sessionToken: "opaque-session-token"
 
       "400":
         description: Request validation failed.
@@ -35,6 +44,17 @@ register:
           application/json:
             schema:
               $ref: "../components/schemas/error.yaml#/ErrorResponse"
+            example:
+              error:
+                code: VALIDATION_ERROR
+                message: Request validation failed
+                details:
+                  issues:
+                    - code: invalid_format
+                      format: email
+                      path:
+                        - email
+                      message: Invalid email address
 
       "409":
         description: Email address is already registered.
@@ -44,8 +64,8 @@ register:
               $ref: "../components/schemas/error.yaml#/ErrorResponse"
             example:
               error:
-                code: EMAIL_ALREADY_EXISTS
-                message: An account with this email already exists.
+                code: CONFLICT
+                message: Email is already registered
 
       "500":
         description: Unexpected server error.
@@ -53,6 +73,10 @@ register:
           application/json:
             schema:
               $ref: "../components/schemas/error.yaml#/ErrorResponse"
+            example:
+              error:
+                code: INTERNAL_SERVER_ERROR
+                message: An unexpected error occurred
 
 login:
   post:
@@ -67,6 +91,9 @@ login:
 
       Invalid email or password produces the same error response
       to avoid revealing whether an account exists.
+
+      The email address is trimmed and normalized to lowercase.
+      The password is not trimmed or normalized.
     operationId: loginUser
     requestBody:
       required: true
@@ -84,6 +111,14 @@ login:
           application/json:
             schema:
               $ref: "../components/schemas/auth.yaml#/LoginResponse"
+            example:
+              data:
+                user:
+                  id: 550e8400-e29b-41d4-a716-446655440000
+                  email: developer@example.com
+                  displayName: Alex Morgan
+                  createdAt: "2026-11-05T06:00:00.000Z"
+                sessionToken: "opaque-session-token"
 
       "400":
         description: Request validation failed.
@@ -91,6 +126,17 @@ login:
           application/json:
             schema:
               $ref: "../components/schemas/error.yaml#/ErrorResponse"
+            example:
+              error:
+                code: VALIDATION_ERROR
+                message: Request validation failed
+                details:
+                  issues:
+                    - code: invalid_format
+                      format: email
+                      path:
+                        - email
+                      message: Invalid email address
 
       "401":
         description: Invalid email or password.
@@ -100,8 +146,8 @@ login:
               $ref: "../components/schemas/error.yaml#/ErrorResponse"
             example:
               error:
-                code: INVALID_CREDENTIALS
-                message: Invalid email or password.
+                code: UNAUTHENTICATED
+                message: Invalid email or password
 
       "500":
         description: Unexpected server error.
@@ -109,6 +155,10 @@ login:
           application/json:
             schema:
               $ref: "../components/schemas/error.yaml#/ErrorResponse"
+            example:
+              error:
+                code: INTERNAL_SERVER_ERROR
+                message: An unexpected error occurred
 
 me:
   get:
@@ -124,7 +174,7 @@ me:
       - BearerAuth: []
     responses:
       "200":
-        description: Current user retrieved successfully
+        description: Current user retrieved successfully.
         content:
           application/json:
             schema:
@@ -139,12 +189,34 @@ me:
                   properties:
                     user:
                       $ref: "../components/schemas/auth.yaml#/AuthUser"
+            example:
+              data:
+                user:
+                  id: 550e8400-e29b-41d4-a716-446655440000
+                  email: developer@example.com
+                  displayName: Alex Morgan
+
       "401":
-        description: Authentication is missing, invalid, expired, or revoked
+        description: Authentication is missing, invalid, expired, or revoked.
         content:
           application/json:
             schema:
               $ref: "../components/schemas/error.yaml#/ErrorResponse"
+            example:
+              error:
+                code: UNAUTHENTICATED
+                message: Authentication is required
+
+      "500":
+        description: Unexpected server error.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/ErrorResponse"
+            example:
+              error:
+                code: INTERNAL_SERVER_ERROR
+                message: An unexpected error occurred
 
 logout:
   post:
@@ -159,10 +231,26 @@ logout:
       - BearerAuth: []
     responses:
       "204":
-        description: Session revoked successfully
+        description: Session revoked successfully. No response body is returned.
+
       "401":
-        description: Authentication is missing, invalid, expired, or revoked
+        description: Authentication is missing, invalid, expired, or revoked.
         content:
           application/json:
             schema:
               $ref: "../components/schemas/error.yaml#/ErrorResponse"
+            example:
+              error:
+                code: UNAUTHENTICATED
+                message: Authentication is required
+
+      "500":
+        description: Unexpected server error.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/ErrorResponse"
+            example:
+              error:
+                code: INTERNAL_SERVER_ERROR
+                message: An unexpected error occurred

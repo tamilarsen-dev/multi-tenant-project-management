@@ -7,20 +7,6 @@ import { prisma } from "../../src/config/prisma.js";
 import { hashSessionToken } from "../../src/modules/identity/session-token.js";
 import { sessionRepository } from "../../src/modules/identity/session.repository.js";
 
-const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is not configured");
-}
-
-const databaseName = new URL(databaseUrl).pathname.slice(1);
-
-if (databaseName !== "project_management_test") {
-  throw new Error(
-    `Refusing to run destructive tests against database: ${databaseName}`,
-  );
-}
-
 const TEST_EMAIL = "register-test@example.com";
 const TEST_PASSWORD = "strongpassword123";
 

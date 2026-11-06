@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch --env-file=.env src/server.ts",
+    "dev": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs watch src/server.ts",
     "lint": "eslint .",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
@@ -13,7 +13,10 @@
     "test:watch": "node --env-file=.env.test ./node_modules/vitest/vitest.mjs",
     "prisma": "node --env-file=.env ./node_modules/prisma/build/index.js --config prisma7.config.ts",
     "prisma:test": "node --env-file=.env.test ./node_modules/prisma/build/index.js --config prisma7.config.ts",
-    "docs:bundle": "scalar document bundle ./docs/openapi/openapi.yaml --output ./docs/openapi/openapi-bundled.yaml --no-input"
+    "docs:bundle": "scalar document bundle ./docs/openapi/openapi.yaml --output ./docs/openapi/openapi-bundled.yaml --no-input",
+    "db:test:check": "node --env-file=.env.test ./scripts/assert-test-database.mjs",
+    "db:test:status": "pnpm db:test:check && node --env-file=.env.test ./node_modules/prisma/build/index.js migrate status",
+    "db:test:migrate": "pnpm db:test:check && node --env-file=.env.test ./node_modules/prisma/build/index.js migrate deploy"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",

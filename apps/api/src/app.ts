@@ -13,6 +13,7 @@ import { apiDocs } from "./middleware/api-docs.js";
 import { AppSuccess } from "./common/http/app-success.js";
 
 import authRoutes from "./modules/identity/auth.routes.js";
+import organizationRoutes from "./modules/organization/organization.routes.js";
 
 export const app = express();
 
@@ -34,6 +35,7 @@ app.get("/healthz", (_req, res) => {
 
 // app
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/organizations", organizationRoutes);
 
 // API documentation
 app.use("/docs", apiDocs);

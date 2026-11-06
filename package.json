@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter api dev",
+    "dev": "node --env-file=apps/api/.env apps/api/node_modules/tsx/dist/cli.mjs watch apps/api/src/server.ts",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "build": "pnpm -r build",

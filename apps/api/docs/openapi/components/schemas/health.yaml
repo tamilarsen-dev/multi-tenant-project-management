@@ -1,0 +1,15 @@
+HealthResponse:
+  type: object
+  required:
+    - data
+  properties:
+    data:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - ok
+          example: ok

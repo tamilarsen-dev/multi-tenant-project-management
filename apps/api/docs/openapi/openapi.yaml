@@ -4,60 +4,91 @@ info:
   title: Project Management API
   version: 1.0.0
   description: |
-    # Introduction
+    # Project Management API
 
-    The Project Management API provides a backend interface for managing
-    organizations, memberships, invitations, projects, and issues.
+    A RESTful API for building and managing collaborative workspaces
+    and project management workflows.
 
-    It is designed around a multi-tenant architecture, where users can
-    collaborate within organizations and manage resources belonging to
-    those organizations.
+    The API follows a multi-tenant architecture, allowing users to
+    create organizations and collaborate within isolated organizational
+    environments.
 
-    ## What can you do?
+    ## Core Capabilities
 
-    The API is organized into the following functional areas:
+    The API is organized around the following functional domains:
 
-    - **Authentication** — Register and authenticate user accounts.
-    - **Organizations** — Manage organization resources.
-    - **Memberships** — Manage user membership within organizations.
-    - **Invitations** — Invite users to join organizations.
-    - **Projects** — Manage projects within an organization.
-    - **Issues** — Manage work items associated with projects.
-    - **Health** — Check API availability.
+    - **Authentication** — Register accounts, authenticate users,
+      manage sessions, and retrieve the current authenticated user.
+    - **Organizations** — Create and manage organizational workspaces.
+    - **Health Monitoring** — Check API availability and service health.
 
-    ## Getting started
+    Additional capabilities, including memberships, invitations,
+    projects, and issues, are part of the planned platform scope
+    and will be documented as their endpoints become available.
 
-    To start integrating with the API:
+    ## Getting Started
 
-    1. Review the available environments and base URLs.
-    2. Understand the authentication flow.
-    3. Authenticate when accessing protected endpoints.
-    4. Include the required headers and request parameters.
-    5. Handle success and error responses according to the API conventions.
+    Follow these steps to start interacting with the API:
+
+    1. Explore the available endpoints in the API Reference.
+    2. Register an account using the registration endpoint.
+    3. Authenticate using the login endpoint.
+    4. Use the returned authentication token for protected endpoints.
+    5. Create an organization to establish your workspace.
 
     ## Authentication
 
-    Some endpoints are publicly accessible, while others require authentication.
+    The API uses bearer token authentication for protected endpoints.
 
-    Protected endpoints use the authentication mechanism described in the
-    Authentication Guide. Each endpoint specifies its authentication
-    requirements in the API Reference.
+    Public endpoints, such as registration and login, do not require
+    authentication.
 
-    ## Documentation structure
+    For protected endpoints, include the authentication token
+    in the `Authorization` header:
 
-    Use the documentation sections to find the information you need:
+    ```http
+    Authorization: Bearer <your-token>
+    ```
 
-    - **Getting Started** — Guides explaining API usage, authentication,
-      conventions, and multi-tenancy.
-    - **API Reference** — Technical specifications for each endpoint,
-      including parameters, request bodies, responses, and error codes.
-    - **Models & Schemas** — Definitions of reusable data structures
-      used throughout the API.
+    Authentication requirements are specified individually
+    for each endpoint.
 
-    ## API versioning
+    ## Multi-Tenancy
 
-    The current API uses the `/api/v1` URL prefix for versioned endpoints.
-    The version prefix allows future API versions to evolve independently.
+    Organizations act as isolated workspace boundaries.
+
+    Users can belong to organizations through memberships.
+    Organization-owned resources are scoped to their respective
+    organizations.
+
+    This model provides a foundation for collaboration and
+    organization-level access control.
+
+    ## API Conventions
+
+    - Base path: `/api/v1`
+    - Content type: `application/json`
+    - Authentication: Bearer token for protected endpoints
+    - Error responses: Standardized API error structure
+    - Resource naming: REST-oriented resource paths
+
+    ## API Versioning
+
+    Versioned endpoints use the `/api/v1` URL prefix.
+
+    The version prefix allows future API versions to evolve
+    independently while maintaining compatibility with existing
+    integrations.
+
+    ## Documentation Structure
+
+    - **Core API** — Health monitoring and authentication.
+    - **Organization Management** — Organization-related operations.
+    - **Schemas** — Reusable request, response, and data structures.
+
+    Use the navigation sidebar to explore endpoints and inspect
+    their parameters, request bodies, responses, and authentication
+    requirements.
 
 servers:
   - url: http://localhost:3000
@@ -65,25 +96,17 @@ servers:
 
 tags:
   - name: Health
-    description: API health monitoring
+    description: |
+      Service health and availability monitoring.
 
   - name: Authentication
-    description: User registration, login, logout, and session management
+    description: |
+      User registration, login, session management,
+      and current user information.
 
   - name: Organizations
-    description: Organization creation and management
-
-  - name: Memberships
-    description: Organization membership management
-
-  - name: Invitations
-    description: Organization invitations
-
-  - name: Projects
-    description: Project management
-
-  - name: Issues
-    description: Issue tracking and management
+    description: |
+      Organization workspace creation and management.
 
 x-tagGroups:
   - name: Core API
@@ -94,34 +117,11 @@ x-tagGroups:
   - name: Organization Management
     tags:
       - Organizations
-      - Memberships
-      - Invitations
-
-  - name: Project Management
-    tags:
-      - Projects
-      - Issues
 
 paths:
   /healthz:
-    get:
-      tags:
-        - Health
-      summary: Check API health
-      description: |
-        Checks whether the API process is running and able
-        to respond to HTTP requests.
-      operationId: getHealth
-      responses:
-        "200":
-          description: API is healthy
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-              example:
-                data:
-                  status: ok
+    $ref: "./paths/health.yaml#/check"
+
   /api/v1/auth/register:
     $ref: "./paths/auth.yaml#/register"
 
@@ -134,6 +134,9 @@ paths:
   /api/v1/auth/logout:
     $ref: "./paths/auth.yaml#/logout"
 
+  /api/v1/organizations:
+    $ref: "./paths/organizations.yaml#/create"
+
 components:
   securitySchemes:
     BearerAuth:
@@ -141,20 +144,7 @@ components:
 
   schemas:
     HealthResponse:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          type: object
-          required:
-            - status
-          properties:
-            status:
-              type: string
-              enum:
-                - ok
-              example: ok
+      $ref: "./components/schemas/health.yaml#/HealthResponse"
 
     ErrorResponse:
       $ref: "./components/schemas/error.yaml#/ErrorResponse"
@@ -188,3 +178,12 @@ components:
 
     LoginResponse:
       $ref: "./components/schemas/auth.yaml#/LoginResponse"
+
+    CreateOrganizationRequest:
+      $ref: "./components/schemas/organizations.yaml#/CreateOrganizationRequest"
+
+    Organization:
+      $ref: "./components/schemas/organizations.yaml#/Organization"
+
+    CreateOrganizationResponse:
+      $ref: "./components/schemas/organizations.yaml#/CreateOrganizationResponse"
