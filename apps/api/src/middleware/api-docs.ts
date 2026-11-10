@@ -1,5 +1,5 @@
 import { apiReference } from "@scalar/express-api-reference";
-import express, { Router } from "express";
+import { Router } from "express";
 import { fileURLToPath } from "node:url";
 
 import type { RequestHandler } from "express";
@@ -9,16 +9,21 @@ import { env } from "../config/env.js";
 
 const router = Router();
 
-const openApiDir = fileURLToPath(
-  new URL("../../docs/openapi/", import.meta.url),
+const bundledSpecPath = fileURLToPath(
+  new URL("../../docs/openapi/openapi-bundled.yaml", import.meta.url),
 );
 
-// Serve OpenAPI specification and external references.
-router.use(express.static(openApiDir, { index: false }));
+router.get("/openapi-bundled.yaml", (_req, res, next) => {
+  res.sendFile(bundledSpecPath, (error) => {
+    if (error) next(error);
+  });
+});
 
 // Scalar API Reference.
 router.use((req, res, next) => {
   const nonce = (res as SecurityResponse).locals.cspNonce;
+
+  const isProduction = env.NODE_ENV === "production";
 
   const handler = apiReference({
     url: "/docs/openapi-bundled.yaml",
@@ -31,7 +36,7 @@ router.use((req, res, next) => {
 
     // Navigation
     showSidebar: true,
-    showDeveloperTools: "localhost",
+    showDeveloperTools: isProduction ? "never" : "localhost",
     searchHotKey: "k",
     operationTitleSource: "summary",
     defaultOpenFirstTag: true,
@@ -39,10 +44,10 @@ router.use((req, res, next) => {
 
     // API interaction
     hideClientButton: false,
-    hideTestRequestButton: env.NODE_ENV === "production",
+    hideTestRequestButton: isProduction,
     defaultHttpClient: {
-      targetKey: "node",
-      clientKey: "fetch",
+      targetKey: "shell",
+      clientKey: "curl",
     },
 
     // Client Libraries

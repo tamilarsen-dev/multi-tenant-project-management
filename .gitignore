@@ -1,15 +1,32 @@
+# dependencies & build output
 node_modules/
 dist/
+build/
+out/
 coverage/
+.next/
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+apps/api/src/generated/prisma/
+
+# env (kecuali contoh)
 .env
 .env.*
 !.env.example
-*.log
-.DS_Store
-docs/
-!/docs/planning
-!/docs/README.md
 
+# logs, OS, secrets
+*.log
+.pnpm-debug.log*
+.DS_Store
+*.pem
+
+# agent tooling
 **/.agents/
 **/.claude/
 **/.windsurf/
+
+# docs
+/docs/*
+!/docs/README.md
+!/docs/planning/
