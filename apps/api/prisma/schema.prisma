@@ -1,7 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Target design: docs/design/database.md. CHECK constraints are not modeled by
+// Prisma; they live in the SQL migrations and are listed next to each model.
 
 generator client {
   provider = "prisma-client"
@@ -12,38 +10,6 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id           String @id @default(uuid()) @db.Uuid
-  email        String @unique @db.VarChar(255)
-  passwordHash String @map("password_hash") @db.VarChar(255)
-  displayName  String @map("display_name") @db.VarChar(100)
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
-
-  sessions Session[]
-
-  memberships Membership[]
-
-  @@map("users")
-}
-
-model Session {
-  id        String @id @default(uuid()) @db.Uuid
-  userId    String @map("user_id") @db.Uuid
-  tokenHash String @unique @map("token_hash") @db.VarChar(64)
-
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
-  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([expiresAt])
-  @@map("sessions")
-}
-
 enum OrganizationRole {
   OWNER
   ADMIN
@@ -52,29 +18,112 @@ enum OrganizationRole {
   @@map("organization_role")
 }
 
+enum MembershipStatus {
+  ACTIVE
+  REMOVED
+
+  @@map("membership_status")
+}
+
+/// Canonical catalog: docs/design/domain-model.md §6.2. Values are added by the
+/// slice that first emits them.
+enum ActivityEventType {
+  ORGANIZATION_CREATED
+  ORGANIZATION_UPDATED
+
+  @@map("activity_event_type")
+}
+
+/// CHECK: email and display_name not blank.
+model User {
+  id           String @id @default(uuid()) @db.Uuid
+  email        String @unique(map: "users_email_unique") @db.VarChar(254)
+  passwordHash String @map("password_hash")
+  displayName  String @map("display_name") @db.VarChar(100)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  sessions    Session[]
+  memberships Membership[]
+  activities  Activity[]
+
+  @@map("users")
+}
+
+/// CHECK: token_hash length 64; expires_at > created_at; expires_at <= absolute_expires_at.
+model Session {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  tokenHash         String    @unique(map: "sessions_token_hash_unique") @map("token_hash") @db.VarChar(64)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt         DateTime  @map("expires_at") @db.Timestamptz(3)
+  absoluteExpiresAt DateTime  @map("absolute_expires_at") @db.Timestamptz(3)
+  revokedAt         DateTime? @map("revoked_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict, map: "sessions_user_id_fkey")
+
+  @@index([userId], map: "sessions_user_id_idx")
+  @@index([expiresAt], map: "sessions_expires_at_idx")
+  @@map("sessions")
+}
+
+/// CHECK: name not blank; version >= 1.
 model Organization {
-  id   String @id @default(uuid()) @db.Uuid
-  name String @db.VarChar(100)
+  id      String @id @default(uuid()) @db.Uuid
+  name    String @db.VarChar(100)
+  version Int    @default(1)
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   memberships Membership[]
+  activities  Activity[]
 
   @@map("organizations")
 }
 
+/// Natural key (organization_id, user_id); `id` is the API's membershipId and the
+/// target of tenant-safe composite FKs via (organization_id, id).
+/// CHECK: version >= 1; status ACTIVE <=> removed_at IS NULL.
 model Membership {
+  id             String           @unique(map: "memberships_id_unique") @default(uuid()) @db.Uuid
   organizationId String           @map("organization_id") @db.Uuid
   userId         String           @map("user_id") @db.Uuid
-  role           OrganizationRole @default(MEMBER)
+  role           OrganizationRole
+  status         MembershipStatus @default(ACTIVE)
+  version        Int              @default(1)
+  joinedAt       DateTime         @default(now()) @map("joined_at") @db.Timestamptz(3)
+  removedAt      DateTime?        @map("removed_at") @db.Timestamptz(3)
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict, map: "memberships_organization_id_fkey")
+  user         User         @relation(fields: [userId], references: [id], onDelete: Restrict, map: "memberships_user_id_fkey")
 
-  @@id([organizationId, userId])
-  @@index([userId])
+  @@id([organizationId, userId], map: "memberships_pkey")
+  @@unique([organizationId, id], map: "memberships_org_id_unique")
+  @@index([userId, status], map: "memberships_user_status_idx")
+  @@index([organizationId, status, joinedAt(sort: Desc), id(sort: Desc)], map: "memberships_org_roster_idx")
   @@map("memberships")
+}
+
+/// Append-only. issue_id gets its tenant FK when the issues table is created.
+/// CHECK: jsonb_typeof(metadata) = 'object'.
+model Activity {
+  id             String            @id @default(uuid()) @db.Uuid
+  organizationId String            @map("organization_id") @db.Uuid
+  actorUserId    String?           @map("actor_user_id") @db.Uuid
+  issueId        String?           @map("issue_id") @db.Uuid
+  eventType      ActivityEventType @map("event_type")
+  metadata       Json
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict, map: "activities_organization_id_fkey")
+  actor        User?        @relation(fields: [actorUserId], references: [id], onDelete: Restrict, map: "activities_actor_user_id_fkey")
+
+  @@unique([organizationId, id], map: "activities_org_id_unique")
+  @@index([organizationId, createdAt(sort: Desc), id(sort: Desc)], map: "activities_org_listing_idx")
+  @@map("activities")
 }

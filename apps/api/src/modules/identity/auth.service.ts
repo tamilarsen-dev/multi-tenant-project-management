@@ -1,124 +1,87 @@
-import { prisma } from "../../config/prisma.js";
-import { Prisma } from "../../generated/prisma/client.js";
-import { AppError } from "../../common/http/app-error.js";
-import { userRepository } from "./user.repository.js";
-import { sessionRepository } from "./session.repository.js";
-import { hashPassword, verifyPassword } from "./password.js";
+import { logger } from "../../config/logger.js";
+import { runInTransaction, type Tx } from "../../db/transaction.js";
+import { AppError } from "../../http/errors.js";
+import { toSessionDto, toUserDto } from "./auth.mapper.js";
+import type { LoginInput, RegisterInput } from "./auth.schema.js";
+import { windowForLogin, windowForRefresh, type SessionWindow } from "./identity.rules.js";
+import { hashPassword, verifyAgainstDummy, verifyPassword } from "./password.js";
+import * as sessions from "./session.repository.js";
 import { generateSessionToken, hashSessionToken } from "./session-token.js";
-import type { RegisterInput, LoginInput } from "./auth.schema.js";
+import * as users from "./user.repository.js";
 
-const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+async function issueSession(userId: string, window: SessionWindow, tx?: Tx) {
+  const accessToken = generateSessionToken();
+  const session = await sessions.createSession(
+    { userId, tokenHash: hashSessionToken(accessToken), ...window },
+    tx,
+  );
+  return toSessionDto(session, accessToken);
+}
 
-export const authService = {
-  async register(input: RegisterInput) {
-    const email = input.email.trim().toLowerCase();
+/** FR-AUTH-001: User and first Session commit together. */
+export async function register(input: RegisterInput) {
+  const passwordHash = await hashPassword(input.password);
 
-    const existingUser = await userRepository.findByEmail(email);
-
-    if (existingUser) {
-      throw new AppError("CONFLICT", {
-        message: "Email is already registered",
-      });
-    }
-
-    const passwordHash = await hashPassword(input.password);
-
-    const sessionToken = generateSessionToken();
-    const tokenHash = hashSessionToken(sessionToken);
-
-    const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
-
-    try {
-      const user = await prisma.$transaction(async (tx) => {
-        const newUser = await userRepository.create(
-          {
-            email,
-            passwordHash,
-            displayName: input.displayName,
-          },
-          tx,
-        );
-
-        await sessionRepository.create(
-          {
-            userId: newUser.id,
-            tokenHash,
-            expiresAt,
-          },
-          tx,
-        );
-
-        return newUser;
-      });
-
-      return {
-        user: {
-          id: user.id,
-          email: user.email,
-          displayName: user.displayName,
-          createdAt: user.createdAt,
-        },
-        sessionToken,
-      };
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
-      ) {
-        throw new AppError("CONFLICT", {
-          message: "Email is already registered",
-        });
-      }
-
-      throw error;
-    }
-  },
-
-  async login(input: LoginInput) {
-    const email = input.email.trim().toLowerCase();
-
-    const user = await userRepository.findByEmail(email);
-
-    if (!user) {
-      throw new AppError("UNAUTHENTICATED", {
-        message: "Invalid email or password",
-      });
-    }
-
-    const isPasswordValid = await verifyPassword(
-      input.password,
-      user.passwordHash,
+  return runInTransaction(async (tx) => {
+    const user = await users.createUser(
+      { email: input.email, passwordHash, displayName: input.displayName },
+      tx,
     );
+    const session = await issueSession(user.id, windowForLogin(new Date()), tx);
+    return { user: toUserDto(user), session };
+  });
+}
 
-    if (!isPasswordValid) {
-      throw new AppError("UNAUTHENTICATED", {
-        message: "Invalid email or password",
-      });
-    }
+/** FR-AUTH-002: unknown email and wrong password are indistinguishable, including in timing. */
+export async function login(input: LoginInput) {
+  const user = await users.findUserByEmail(input.email);
 
-    const sessionToken = generateSessionToken();
-    const tokenHash = hashSessionToken(sessionToken);
+  const valid = user
+    ? await verifyPassword(input.password, user.passwordHash)
+    : await verifyAgainstDummy(input.password);
 
-    const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
+  if (!user || !valid) {
+    throw new AppError("INVALID_CREDENTIALS");
+  }
 
-    await sessionRepository.create({
-      userId: user.id,
-      tokenHash,
-      expiresAt,
-    });
+  const session = await issueSession(user.id, windowForLogin(new Date()));
+  return { user: toUserDto(user), session };
+}
 
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        displayName: user.displayName,
-        createdAt: user.createdAt,
-      },
-      sessionToken,
-    };
-  },
+/**
+ * FR-AUTH-006: conditional revoke + insert in one transaction. Of concurrent refreshes
+ * with one token exactly one wins; reuse of a rotated token is logged, not escalated.
+ */
+export async function refresh(token: string) {
+  const tokenHash = hashSessionToken(token);
 
-  async logout(sessionId: string) {
-    await sessionRepository.revokeById(sessionId);
-  },
-};
+  const result = await runInTransaction(async (tx) => {
+    const revoked = await sessions.revokeIfActive(tokenHash, tx);
+    if (!revoked) return null;
+
+    const session = await issueSession(
+      revoked.userId,
+      windowForRefresh(new Date(), revoked.absoluteExpiresAt),
+      tx,
+    );
+    const user = await sessions.findUserForAuth(revoked.userId, tx);
+    return { user: toUserDto(user), session };
+  });
+
+  if (result) return result;
+
+  const existing = await sessions.findSessionByTokenHash(tokenHash);
+  if (existing?.revokedAt) {
+    logger.warn(
+      { event: "session.revoked_token_reuse", sessionId: existing.id, userId: existing.userId },
+      "Refresh attempted with a revoked or rotated session token",
+    );
+  }
+
+  throw new AppError("INVALID_SESSION");
+}
+
+/** FR-AUTH-004: revokes only the calling Session. */
+export async function logout(sessionId: string) {
+  await sessions.revokeSessionById(sessionId);
+}

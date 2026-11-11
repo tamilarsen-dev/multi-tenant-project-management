@@ -1,6 +1,6 @@
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
-import { prisma } from "./config/prisma.js";
+import { prisma } from "./db/client.js";
 import { app } from "./app.js";
 
 const server = app.listen(env.PORT, () => {

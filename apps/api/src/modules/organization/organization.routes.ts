@@ -1,16 +1,15 @@
 import { Router } from "express";
+
 import { authenticate } from "../identity/auth.middleware.js";
-import { validate } from "../../middleware/validate.js";
-import { createOrganizationSchema } from "./organization.schema.js";
-import { organizationController } from "./organization.controller.js";
+import * as organization from "./organization.controller.js";
 
 const router = Router();
 
-router.post(
-  "/",
-  authenticate,
-  validate(createOrganizationSchema),
-  organizationController.create,
-);
+router.use(authenticate);
+
+router.post("/", organization.create);
+router.get("/", organization.list);
+router.get("/:organizationId", organization.get);
+router.patch("/:organizationId", organization.update);
 
 export default router;
