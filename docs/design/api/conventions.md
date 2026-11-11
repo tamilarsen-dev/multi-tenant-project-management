@@ -54,7 +54,7 @@ Authorization: Bearer <token>
 - A missing or malformed `Authorization` header produces `401 MISSING_AUTHENTICATION`. A token that is unknown, expired, revoked, or already rotated produces `401 INVALID_SESSION`.
 - Every `401` response includes `WWW-Authenticate: Bearer`.
 - The actor's identity and Membership come from the Session and server-side data only. Client-supplied `userId`, `role`, or `membershipId` fields never establish who the actor is.
-- JWT and cookie authentication are not V1 mechanisms. How a browser client stores the token is an open decision that must be closed before web login ships (see [Roadmap](../../plan/roadmap.md#open-decisions)).
+- JWT and cookie authentication are not V1 API mechanisms. The web client keeps the token server-side in its own Next.js backend and forwards it as a Bearer header ([ADR-0010](../../adr/0010-web-client-session-via-bff.md)).
 
 ## 5. Success responses
 

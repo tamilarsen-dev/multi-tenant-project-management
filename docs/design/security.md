@@ -64,7 +64,7 @@ Decision record: [ADR-0003](../adr/0003-opaque-bearer-session-tokens.md).
 - Refresh rotates atomically; only one concurrent refresh wins; a rotated token is rejected and logged.
 - Logout revokes the current Session only.
 - Expired and revoked Sessions are rejected by the query itself, never by relying on a cleanup job.
-- **Open:** how the web client stores the token. Options are memory plus refresh on reload, or a backend-for-frontend that holds the token server-side and gives the browser an `HttpOnly` cookie. Must be decided before browser login ships ([Roadmap](../plan/roadmap.md#open-decisions)).
+- The web client never exposes the token to browser JavaScript: the Next.js server holds it in an `HttpOnly; Secure; SameSite=Lax` cookie and calls the API on the user's behalf ([ADR-0010](../adr/0010-web-client-session-via-bff.md)). CSRF protection for that cookie lives in the web app (SameSite plus `Origin` check), not in the API.
 
 ## 6. CORS and headers
 

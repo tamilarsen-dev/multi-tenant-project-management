@@ -105,3 +105,11 @@ Contradictions resolved:
 | Activity table in the first migration | Spec required a foreign key to `issues`, which does not exist yet | FK added by the Issues migration |
 | Rate-limit algorithm | Token bucket required, fixed window implemented | Either is acceptable; thresholds come from measurement |
 | Comment body limit | 5,000 in the archived baseline, 10,000 in the contract | 10,000, defined once in [Conventions §7.1](design/api/conventions.md#71-field-limits) |
+
+### 2026-11-11 — Open decisions closed
+
+- OD-20 browser token storage → Next.js backend-for-frontend with an `HttpOnly` cookie ([ADR-0010](adr/0010-web-client-session-via-bff.md)).
+- OD-15 performance workload → profile in [Operations §6](engineering/operations.md#6-performance-and-capacity).
+- OD-16 backup → 7 daily + 4 weekly, RPO 24 h, RTO 4 h after the first restore drill ([Operations §8](engineering/operations.md#8-backup-and-recovery)).
+- OD-21 hosting → selection criteria fixed; provider chosen at M6.
+- OD-22 email → Mailpit for development and tests; production provider chosen at the end of M2.

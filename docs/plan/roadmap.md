@@ -87,11 +87,8 @@ The single register of decisions not yet made. When one is decided, record it in
 
 | ID | Decision | Blocks | Owner document |
 |---|---|---|---|
-| OD-15 | Performance workload profile (dataset size, concurrency, environment) | Claiming PRD latency targets | [Operations §6](../engineering/operations.md#6-performance-and-capacity) |
-| OD-16 | Backup retention, RPO, RTO | Production release (REL-05) | [Operations §8](../engineering/operations.md#8-backup-and-recovery) |
-| OD-20 | Browser token storage for `apps/web` (in-memory vs. backend-for-frontend with `HttpOnly` cookie) | Web login | [Security §5](../design/security.md#5-sessions) |
-| OD-21 | Hosting provider for the VPS | REL-06 | [Operations §1](../engineering/operations.md#1-hosting) |
-| OD-22 | Transactional email provider | INV-08 | [Operations §2](../engineering/operations.md#2-configuration) |
+| OD-21 | Hosting provider for the VPS (criteria fixed; compare at M6) | REL-06 | [Operations §1](../engineering/operations.md#1-hosting) |
+| OD-22 | Production email provider (Mailpit decided for dev/test; choose at end of M2) | INV-08 | [Operations §2](../engineering/operations.md#2-configuration) |
 
 ## Risks
 

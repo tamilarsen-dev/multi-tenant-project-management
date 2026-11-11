@@ -19,7 +19,7 @@ The API needs authentication for browser and non-browser clients, immediate revo
 ## Alternatives considered
 
 - **JWT access tokens with refresh tokens.** Verification without a database lookup, which matters for many services; here there is one API and one database, so the lookup is cheap. JWTs cannot be revoked before expiry without a denylist, which reintroduces the lookup. Rejected for V1.
-- **HttpOnly session cookie.** Protects the token from JavaScript (XSS), but requires CSRF protection and credentialed CORS, and is awkward for non-browser clients. Rejected as the API mechanism; still a candidate for how the web client stores the token (open decision).
+- **HttpOnly session cookie.** Protects the token from JavaScript (XSS), but requires CSRF protection and credentialed CORS, and is awkward for non-browser clients. Rejected as the API mechanism; adopted later for the web client's own session, see [ADR-0010](0010-web-client-session-via-bff.md).
 - **Sliding expiration** (extend on every request). Convenient, but a stolen token stays valid indefinitely while used. Rejected.
 - **Revoke the whole refresh chain on reuse** (OAuth refresh-token reuse detection). Stronger against stolen refresh tokens, but needs a chain identifier and logs out the legitimate user when a client merely retries a lost response. Deferred; the absolute lifetime already bounds the damage to 30 days.
 
@@ -28,4 +28,4 @@ The API needs authentication for browser and non-browser clients, immediate revo
 - `sessions` gains `absolute_expires_at` with `CHECK (expires_at <= absolute_expires_at)`.
 - Every authenticated request costs one indexed lookup by token hash.
 - A client that loses a refresh response must log in again (no grace window).
-- The browser token-storage decision remains open and must be closed before web login ships.
+- Browser token storage is decided in [ADR-0010](0010-web-client-session-via-bff.md).

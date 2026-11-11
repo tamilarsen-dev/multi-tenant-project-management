@@ -15,6 +15,7 @@ An ADR records one consequential decision: the context that forced it, what was 
 | [0007](0007-concurrency-control.md) | Optimistic concurrency with `version` in the body; row locks for multi-row invariants | Accepted |
 | [0008](0008-transactional-outbox-for-email.md) | Transactional Outbox for invitation email | Accepted |
 | [0009](0009-pragmatic-persistence-boundary.md) | Prisma confined to repositories and one transaction helper | Accepted |
+| [0010](0010-web-client-session-via-bff.md) | Web client holds the session through a Next.js backend-for-frontend | Accepted |
 
 ## When to write one
 
