@@ -1,237 +1,115 @@
-# Documentation Guide
+# Documentation
 
-Dokumentasi ini menjadi pintu masuk utama untuk memahami, mengembangkan, dan memelihara project **Multi-Tenant Project Management API**.
+Documentation for the **Multi-Tenant Project Management** platform: a Jira/Linear-style backend where Organizations are isolated tenants, Users can belong to several Organizations with a different role in each, and work is tracked as Projects and Issues with full history.
 
-Tujuannya bukan sekadar mengumpulkan dokumen. Setiap dokumen memiliki tanggung jawab yang jelas agar keputusan produk, aturan domain, desain database, kontrak API, dan implementasi tidak saling bertentangan.
+Start with the [PRD](product/prd.md) for the why, then [Architecture](design/architecture.md) for the how. The [Roadmap](plan/roadmap.md) says what exists today.
 
-> **Prinsip utama:** jika implementasi bertentangan dengan dokumen keputusan yang masih aktif, jangan mengubah perilaku secara diam-diam. Periksa dokumen pemilik keputusan, tentukan perubahan yang benar, lalu perbarui implementasi dan dokumentasi terkait.
-
----
-
-## 1. Mulai dari mana?
-
-Urutan membaca yang disarankan:
-
-1. **Product Requirements** untuk memahami masalah, tujuan, ruang lingkup, dan kebutuhan produk.
-2. **PRD** untuk memahami konteks produk dan batasan V1.
-3. **Domain Map** untuk memahami entitas domain dan hubungan antar-entitas.
-4. **Architecture** dan **ADR** untuk memahami struktur sistem serta alasan keputusan teknis.
-5. **Database Specification** untuk memahami model data, constraints, invariants, transaksi, dan concurrency.
-6. **Permissions** untuk memahami siapa yang boleh melakukan apa dalam Organization.
-7. **API Conventions** lalu **API Contract** untuk memahami aturan umum HTTP/API dan kontrak setiap endpoint.
-8. **Implementation Plan** untuk melihat urutan pengerjaan dan dependency antar-pekerjaan.
-
-Untuk mengerjakan fitur tertentu, baca dokumen pemilik domain tersebut beserta dokumen lintas-domain yang relevan. Jangan mengandalkan README ini sebagai pengganti spesifikasi.
-
----
-
-## 2. Struktur dokumentasi
-
-Dokumen aktif dikelompokkan berdasarkan tanggung jawabnya.
-
-### `product/` — tujuan dan kebutuhan produk
-
-| Dokumen | Tanggung jawab |
-|---|---|
-| `prd-v1.2.md` | Menjelaskan konteks produk, visi, target pengguna, ruang lingkup, dan batasan produk. |
-| `requirements-v1.2.md` | Menjabarkan kebutuhan dan requirement yang harus dipenuhi oleh sistem. |
-
-Dokumen product menjawab **apa yang perlu dibangun dan mengapa**. Dokumen ini tidak seharusnya menjadi tempat mendefinisikan detail implementasi database atau bentuk payload endpoint.
-
-### `design/` — desain sistem dan kontrak teknis
-
-| Dokumen | Tanggung jawab |
-|---|---|
-| `architecture.md` | Menjelaskan arsitektur aplikasi, pembagian layer, komponen, dan dependency direction. |
-| `domain-map-v1.2.md` | Menjelaskan domain, entitas utama, relasi, dan batas konteks domain. |
-| `database-specification-v1.3.md` | Menjadi acuan struktur data, constraints, lifecycle, invariants, transaction behavior, dan concurrency rules. |
-| `permissions-v1.1.md` | Menetapkan role, permission, dan aturan otorisasi. |
-| `api-conventions.md` | Menetapkan konvensi API lintas endpoint, seperti format response, error, validation, pagination, dan aturan umum HTTP. |
-| `0001-api-contract.md` | Menetapkan kontrak API: endpoint, request, response, authorization, error behavior, dan semantik operasi. |
-
-Dokumen design menjawab **bagaimana sistem harus berperilaku dan batasan teknis apa yang wajib dipenuhi**.
-
-### `adr/` — catatan keputusan arsitektur
-
-| Dokumen | Tanggung jawab |
-|---|---|
-| `ADR-001-architecture-baseline.md` | Mencatat keputusan baseline arsitektur beserta alasan dan konsekuensinya. |
-
-ADR menyimpan alasan di balik keputusan penting. Jika suatu keputusan perlu diubah, revisi atau tambahkan ADR yang sesuai. Jangan hanya mengubah kode lalu membiarkan alasan dan keputusan lama tetap terlihat aktif.
-
-### `implementation-plan-v1.1.md` — urutan implementasi
-
-Dokumen ini mengatur tahapan implementasi, dependency, dan urutan pekerjaan. Implementation Plan bukan pengganti spesifikasi. Jika ada perbedaan, gunakan dokumen pemilik keputusan untuk menentukan perilaku yang benar, lalu perbarui Implementation Plan.
-
-### Dokumen audit
-
-Laporan audit repository mencatat perbedaan antara spesifikasi aktif dan kondisi implementasi pada saat audit dilakukan. Audit adalah **snapshot kondisi repository**, bukan spesifikasi produk atau desain permanen.
-
-Setiap temuan audit perlu ditutup dengan perubahan kode/dokumen dan bukti verifikasi. Jangan menganggap status audit otomatis selesai hanya karena task sudah dikerjakan.
-
----
-
-## 3. Sumber kebenaran dan urutan otoritas
-
-Tidak ada satu dokumen yang menjadi sumber kebenaran untuk semua hal. Gunakan dokumen yang memiliki tanggung jawab atas keputusan tersebut.
-
-| Pertanyaan | Dokumen acuan utama |
-|---|---|
-| Apa tujuan dan scope produk? | PRD |
-| Apa requirement yang harus dipenuhi? | Requirements |
-| Apa entitas domain dan relasinya? | Domain Map |
-| Bagaimana struktur dan dependency aplikasi? | Architecture + ADR |
-| Bagaimana struktur data dan invariant database? | Database Specification |
-| Siapa yang boleh melakukan tindakan tertentu? | Permissions |
-| Apa aturan umum API? | API Conventions |
-| Apa perilaku endpoint tertentu? | API Contract |
-| Apa urutan implementasinya? | Implementation Plan |
-| Apa yang belum sesuai di repository saat audit? | Repository Audit |
-
-### Aturan menyelesaikan konflik
-
-Jika dua dokumen tampak bertentangan:
-
-1. Identifikasi keputusan yang dipersoalkan dan dokumen pemiliknya.
-2. Periksa versi dan status dokumen. Jangan memakai dokumen historis atau arsip sebagai keputusan aktif.
-3. Periksa apakah konflik tersebut memang konflik atau hanya dua dokumen yang membahas aspek berbeda.
-4. Jika keputusan perlu berubah, revisi dokumen pemilik keputusan terlebih dahulu.
-5. Perbarui semua dokumen turunan yang terdampak.
-6. Perbarui implementasi, OpenAPI, migration, dan tests sesuai perubahan.
-7. Catat keputusan arsitektur yang berdampak luas melalui ADR.
-
-Jangan menyelesaikan konflik dengan memilih dokumen yang paling baru diedit secara otomatis. Tanggung jawab dokumen lebih penting daripada timestamp file.
-
----
-
-## 4. Hubungan antar-dokumen
-
-Alur konseptual dokumentasi:
+## Map
 
 ```text
-Product
-  PRD
-   |
-  Requirements
-   |
-Domain & Design
-  Domain Map
-   |
-  Architecture + ADR
-   |
-  Database Specification
-  Permissions
-  API Conventions
-   |
-  API Contract
-   |
-Implementation Plan
-   |
-Implementation
-  Source code + migrations + tests + OpenAPI
-   |
-Verification
-  CI + repository audit + operational evidence
+docs/
+├── README.md                 you are here
+├── product/
+│   ├── prd.md                why the product exists, who it serves, what V1 includes
+│   └── requirements.md       testable functional and non-functional requirements (FR-*, BR-*, NFR-*)
+├── design/
+│   ├── architecture.md       code organization, layers, allowed dependencies
+│   ├── domain-model.md       entities, lifecycles, invariants, event and notification catalogs
+│   ├── database.md           PostgreSQL schema, constraints, indexes, transactions, locking
+│   ├── permissions.md        who may do what, per role
+│   ├── security.md           threat model and security controls
+│   └── api/
+│       ├── conventions.md    rules shared by every endpoint
+│       ├── errors.md         every error code
+│       └── contract.md       every endpoint
+├── adr/                      architecture decision records (why things are the way they are)
+├── engineering/
+│   ├── testing.md            test levels, mandatory suites, definition of done
+│   ├── workflow.md           branches, commits, PRs, CI, code conventions, releases
+│   └── operations.md         deployment, health, observability, backups, runbooks
+├── plan/
+│   └── roadmap.md            milestones, current status, open decisions
+└── ui/                       web client design system
 ```
 
-Hubungan ini bukan berarti semua dokumen harus selalu diedit bersamaan. Perubahan dilakukan berdasarkan dampaknya.
+The OpenAPI description of the **implemented** endpoints lives with the code in `apps/api/docs/openapi/` and is served at `/docs`.
 
-Contoh:
-- Perubahan lifecycle Membership dapat memengaruhi Database Specification, Permissions, API Contract, Domain Map, Implementation Plan, migration, service, dan tests.
-- Perubahan response envelope dapat memengaruhi API Conventions, API Contract, OpenAPI, error middleware, dan tests.
-- Perubahan role dapat memengaruhi Permissions, API Contract, authorization logic, dan tests.
-- Perubahan arsitektur dapat memerlukan ADR, Architecture, Implementation Plan, serta dependency antar-package.
+## Authority map
 
----
+Each kind of decision has exactly one owning document. Other documents may summarize it and link to it, but never redefine it.
 
-## 5. Dokumentasi dan implementasi
+| Question | Owner |
+|---|---|
+| Is this in V1 scope? Why? | [PRD](product/prd.md) |
+| What exactly must the system do? | [Requirements](product/requirements.md) |
+| What does this entity mean, what states can it be in, what must always be true? | [Domain Model](design/domain-model.md) |
+| Which Activity event types and Notification types exist? | [Domain Model §6](design/domain-model.md#62-activity) |
+| Who may perform this action? | [Permissions](design/permissions.md) |
+| How is it stored, constrained, locked? | [Database](design/database.md) |
+| How is the code organized? | [Architecture](design/architecture.md) |
+| What is the HTTP behavior shared by all endpoints? Field length limits? | [API Conventions](design/api/conventions.md) |
+| What error codes exist? | [Errors](design/api/errors.md) |
+| What does this endpoint accept and return? | [API Contract](design/api/contract.md) |
+| What security controls apply? | [Security](design/security.md) |
+| Why was this structural choice made? | [ADRs](adr/README.md) |
+| How is it tested, merged, released, operated? | [Engineering](engineering/) |
+| What is built, what is next, what is undecided? | [Roadmap](plan/roadmap.md) |
+| What is actually implemented? | The code, migrations, and tests |
 
-Untuk setiap fitur, jaga konsistensi setidaknya pada lima lapisan:
+When two documents disagree, the owner wins and the other is corrected in the same change. Never resolve a conflict by picking the most recently edited file.
 
-1. **Domain:** aturan bisnis dan lifecycle entitas.
-2. **Database:** constraints, foreign keys, indexes, invariants, dan transaction/concurrency behavior.
-3. **API:** endpoint, request/response, authorization, validation, dan error semantics.
-4. **Implementation:** layer ownership, service/use case, persistence adapter, dan transport handler.
-5. **Verification:** unit/integration tests, migration checks, OpenAPI validation, dan CI.
+## Conventions for these documents
 
-Fitur belum dianggap selesai hanya karena endpoint merespons sukses. Periksa juga tenant isolation, authorization, failure path, transaction atomicity, dan concurrency behavior jika relevan.
+- **English**, plain and direct. Domain terms are capitalized when they name an entity (Organization, Membership, Issue).
+- **No versions in file names.** Git is the version history. Each document starts with a small table: Status, Owner, Last updated.
+- **Status values:** `Active` for maintained documents; ADRs use `Proposed`, `Accepted`, `Superseded by NNNN`.
+- **Requirement keywords** MUST, SHOULD, MAY have their RFC 2119 meaning where used.
+- **Specifications describe intent, the roadmap records progress.** A design document never claims something is implemented; the roadmap never redefines behavior.
+- **Link, don't copy.** Reference another document's section with a relative link instead of restating it.
+- **Diagrams** are Mermaid or plain-text blocks in Markdown so they are diffable and render on GitHub.
 
-OpenAPI harus menggambarkan kontrak endpoint yang memang disepakati dan implementasinya. Modular OpenAPI source merupakan sumber untuk menghasilkan bundled specification. Jangan mengedit generated bundle secara manual jika bundle tersebut dihasilkan dari source modular.
+## Changing the documentation
 
----
+1. Change behavior and its owning document in the **same pull request** as the code (or before it, for design-first work).
+2. A consequential structural decision gets an ADR ([when to write one](adr/README.md#when-to-write-one)).
+3. A new open question goes into the [Roadmap register](plan/roadmap.md#open-decisions), not into scattered "TBD" notes.
+4. Delete superseded content. Git history keeps it; the working tree should contain only what is true now.
 
-## 6. Aturan pemeliharaan dokumentasi
+## Change log
 
-### Saat menambah fitur
+### 2026-11-11 — Consolidation
 
-- Periksa dokumen pemilik domain sebelum menulis kode.
-- Pastikan requirement dan acceptance criteria jelas.
-- Perbarui API Contract jika public API berubah.
-- Perbarui Database Specification jika model, constraint, atau invariant berubah.
-- Perbarui Permissions jika aturan akses berubah.
-- Perbarui Implementation Plan jika dependency atau urutan pekerjaan berubah.
-- Tambahkan atau perbarui tests dan OpenAPI.
+The documentation previously existed in three generations (an archive of stage-by-stage planning documents, six bundled decision records, and a newer set of versioned specifications plus audit reports), was excluded from Git by `.gitignore`, and contained contradictions. This change:
 
-### Saat mengubah keputusan
+- Tracks all documentation in Git (the pre-consolidation snapshot is commit `419f9e6` on branch `docs/consolidate`).
+- Merges the three generations into the structure above, in English, without version numbers in file names.
+- Splits the six bundled decision records into nine single-decision ADRs and moves process content into `engineering/`.
+- Replaces audit reports with the "Current state" table in the Roadmap; the remaining gaps are M1 tasks.
 
-- Jangan mengubah keputusan lintas-domain hanya melalui perubahan kode.
-- Perbarui dokumen pemilik keputusan terlebih dahulu.
-- Gunakan ADR untuk keputusan arsitektur yang memiliki konsekuensi jangka panjang.
-- Perbarui dokumen turunan dan catat dampaknya.
+Contradictions resolved:
 
-### Saat menyelesaikan pekerjaan
+| Topic | Before | Now |
+|---|---|---|
+| Session lifetime | "Fixed 7 days, no sliding", yet refresh could extend a session forever | 7-day sessions inside a 30-day absolute lifetime ([ADR-0003](adr/0003-opaque-bearer-session-tokens.md)) |
+| Enum representation | Spec said `VARCHAR` + `CHECK`; code used native enums | Native enums for all closed sets ([ADR-0005](adr/0005-postgresql-native-enums.md)) |
+| Notifications | Contract had `USER_MENTIONED`, status-change and invitation-accepted notifications; Requirements had different recipients | Four types matching BR-NOTIF ([Domain Model §6.3](design/domain-model.md#63-notification)) |
+| Activity event names | Domain and contract used different names (`ISSUE_LABEL_ADDED` vs `ISSUE_LABEL_ATTACHED`, `ISSUE_ASSIGNED` vs `ISSUE_ASSIGNEE_CHANGED`) | One canonical catalog in the Domain Model |
+| Request ID | Audit wanted it in the error body; conventions said it is not public | `X-Request-Id` response header ([ADR-0002](adr/0002-json-error-envelope.md)) |
+| Membership key | Audit called the composite primary key a defect | The spec's design stands: composite PK plus a unique `id`; only lifecycle columns are missing |
+| Persistence architecture | Audit demanded full ports and adapters | Repositories plus one transaction helper ([ADR-0009](adr/0009-pragmatic-persistence-boundary.md)) |
+| `/auth/me` | Implemented, missing from the contract | In the contract |
+| Mark notification unread | Required, no endpoint | `PATCH /notifications/{id}/unread` |
+| Issue search | Required, no query parameter | `q` on List Issues |
+| `DELETE` with JSON body | Membership removal and Comment delete sent `version` in a body | `version` as a query parameter |
+| Login enumeration | Dummy verification existed only in the archived security baseline | Restored in the contract and [Security §3](design/security.md#3-authentication-abuse) |
+| Activity table in the first migration | Spec required a foreign key to `issues`, which does not exist yet | FK added by the Issues migration |
+| Rate-limit algorithm | Token bucket required, fixed window implemented | Either is acceptable; thresholds come from measurement |
+| Comment body limit | 5,000 in the archived baseline, 10,000 in the contract | 10,000, defined once in [Conventions §7.1](design/api/conventions.md#71-field-limits) |
 
-- Hapus TODO yang sudah tidak relevan.
-- Jangan mempertahankan dua dokumen aktif yang menyatakan keputusan berbeda.
-- Jangan menyalin spesifikasi penuh ke banyak dokumen. Gunakan referensi ke dokumen pemilik.
-- Tandai dokumen yang sudah digantikan sebagai superseded atau pindahkan ke arsip dengan status yang jelas.
+### 2026-11-11 — Open decisions closed
 
----
-
-## 7. Versi aktif dan arsip
-
-Dokumen dengan nomor versi pada nama file menunjukkan baseline versi yang sedang dirujuk oleh project, misalnya `database-specification-v1.3.md`.
-
-Folder `archive/`, jika ada, berisi materi historis. Dokumen di dalamnya **bukan sumber keputusan aktif** kecuali dokumen aktif secara eksplisit merujuknya untuk konteks sejarah.
-
-Jika ada perbedaan antara dokumen aktif dan arsip, ikuti dokumen aktif. Jangan menghidupkan kembali keputusan lama hanya karena masih ada di repository.
-
----
-
-## 8. Status dokumentasi bukan status implementasi
-
-Keberadaan spesifikasi tidak berarti fiturnya sudah dibuat. Sebaliknya, keberadaan kode tidak berarti implementasinya sudah sesuai spesifikasi.
-
-Gunakan pembedaan berikut:
-
-- **Specified:** perilaku atau desain sudah didefinisikan dalam dokumen.
-- **Planned:** pekerjaan masuk rencana implementasi.
-- **Implemented:** kode sudah dibuat.
-- **Verified:** behavior telah diuji dan bukti verifikasi tersedia.
-- **Released:** fitur telah dirilis sesuai proses deployment project.
-
-Status tersebut tidak boleh dipertukarkan. Khususnya, `Implemented` tidak otomatis berarti `Verified`.
-
----
-
-## 9. Checklist sebelum merge
-
-- [ ] Perubahan sesuai dokumen pemilik keputusan.
-- [ ] Tidak ada konflik baru antar-dokumen aktif.
-- [ ] Database constraints dan tenant boundary tetap terjaga.
-- [ ] Authorization dan validation sesuai kontrak.
-- [ ] Error response dan logging tidak membocorkan data sensitif.
-- [ ] Transaction dan concurrency behavior diuji jika relevan.
-- [ ] Migration tersedia dan aman untuk data yang ada.
-- [ ] OpenAPI diperbarui untuk perubahan public API.
-- [ ] Tests relevan berhasil dijalankan.
-- [ ] Lint, typecheck, build, dan CI berhasil.
-- [ ] Implementation Plan dan audit/remediation status diperbarui jika diperlukan.
-
----
-
-## 10. Prinsip penutup
-
-Dokumentasi harus mengurangi ambiguitas, bukan menambah birokrasi. Satu keputusan sebaiknya memiliki satu dokumen pemilik yang jelas. Dokumen lain boleh menjelaskan dampaknya, tetapi tidak boleh mendefinisikan ulang keputusan tersebut secara independen.
-
-Jika kode, tests, OpenAPI, dan spesifikasi tidak sepakat, anggap pekerjaan belum selesai sampai perbedaannya diselesaikan secara eksplisit.
+- OD-20 browser token storage → Next.js backend-for-frontend with an `HttpOnly` cookie ([ADR-0010](adr/0010-web-client-session-via-bff.md)).
+- OD-15 performance workload → profile in [Operations §6](engineering/operations.md#6-performance-and-capacity).
+- OD-16 backup → 7 daily + 4 weekly, RPO 24 h, RTO 4 h after the first restore drill ([Operations §8](engineering/operations.md#8-backup-and-recovery)).
+- OD-21 hosting → selection criteria fixed; provider chosen at M6.
+- OD-22 email → Mailpit for development and tests; production provider chosen at the end of M2.

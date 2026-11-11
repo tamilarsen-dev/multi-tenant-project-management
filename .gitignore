@@ -26,7 +26,5 @@ apps/api/src/generated/prisma/
 **/.claude/
 **/.windsurf/
 
-# docs
-/docs/*
-!/docs/README.md
-!/docs/planning/
+# archives (documentation lives as Markdown, not zips)
+*.zip
