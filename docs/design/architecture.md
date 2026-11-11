@@ -1,17 +1,13 @@
 # Architecture
 
-## Multi-Tenant Project Management
-
 | Field | Value |
 |---|---|
-| Document | `docs/architecture.md` |
-| Status | **Accepted architecture baseline** |
-| Product scope | V1 |
-| Architecture style | Monorepo + Modular Monolith + Pragmatic Clean Architecture |
-| Package manager | pnpm workspace |
-| Last updated | 2026-11-09 |
+| Status | Active |
+| Owner | T. Tamil Arsen |
+| Last updated | 2026-11-11 |
+| Style | pnpm monorepo · modular monolith · pragmatic Clean Architecture |
 
-> This document records the accepted architecture baseline and gives implementation guidance. It does not replace the product requirements, domain, API, permissions, or database specifications. Those documents remain authoritative for their respective subjects.
+This document explains how the code is organized and which dependencies are allowed. The reasoning behind each structural choice is recorded in the [ADRs](../adr/README.md).
 
 ---
 
@@ -72,18 +68,12 @@ These are not statements that the technologies are inherently bad. They are scop
 
 ## 3. Architecture decisions
 
-The following decisions are accepted for the V1 architecture baseline and are recorded in [`ADR-001`](./ADR-001-architecture-baseline.md).
-
-| ID | Decision | Status | Rationale |
-|---|---|---|---|
-| ADR-001A | Use a monorepo managed by pnpm workspace | Accepted | API and web application share one repository and can share deliberately designed packages and tooling |
-| ADR-001B | Build the backend as a modular monolith | Accepted | One backend deployment is sufficient for V1; domain boundaries provide internal organization without distributed-system overhead |
-| ADR-001C | Use Pragmatic Clean Architecture boundaries inside the API | Accepted | Keep business rules independent from transport and persistence details where that separation has real value |
-| ADR-001D | Use in-process communication between backend modules | Accepted | Modules are part of one application and can coordinate without network calls or a broker |
-| ADR-001E | Use PostgreSQL as the source of truth and Prisma as the primary data-access tool | Accepted baseline | Relational integrity and transactional behavior are central to the domain |
-| ADR-001F | Use a database-backed Outbox for durable asynchronous work | Accepted baseline | Business changes and the intent to perform asynchronous work must be committed atomically |
-
-The decision records are consolidated here so the project has one maintained architecture document. If the project later adopts separate ADR files, each record can be extracted without changing its decision.
+| Decision | Record |
+|---|---|
+| pnpm monorepo; backend as a modular monolith; pragmatic Clean Architecture; in-process module communication | [ADR-0001](../adr/0001-monorepo-and-modular-monolith.md) |
+| Prisma confined to infrastructure through repositories and one transaction helper; no port interfaces by default | [ADR-0009](../adr/0009-pragmatic-persistence-boundary.md) |
+| PostgreSQL as source of truth, tenant isolation by scoped queries plus composite foreign keys, no RLS in V1 | [ADR-0006](../adr/0006-tenant-isolation-strategy.md) |
+| Database-backed Outbox for invitation email | [ADR-0008](../adr/0008-transactional-outbox-for-email.md) |
 
 ### 3.1 Why monorepo
 
@@ -140,31 +130,21 @@ The repository uses pnpm workspace and contains separate application directories
 
 ```text
 repository/
-├── .github/
+├── .github/workflows/        # CI
 ├── apps/
-│   ├── api/
-│   │   ├── prisma/
+│   ├── api/                  # Express API (layout in §7.2)
+│   │   ├── docs/openapi/     # OpenAPI source (modular YAML) and generated bundle
+│   │   ├── prisma/           # schema.prisma and migrations
 │   │   ├── scripts/
 │   │   ├── src/
-│   │   │   ├── common/
-│   │   │   ├── config/
-│   │   │   ├── generated/
-│   │   │   ├── middleware/
-│   │   │   ├── modules/
-│   │   │   ├── types/
-│   │   │   ├── app.ts
-│   │   │   └── server.ts
 │   │   └── test/
-│   └── web/
-├── docs/
-├── compose.yaml
-├── package.json
+│   └── web/                  # Next.js web client
+├── docs/                     # this documentation
+├── compose.yaml              # local PostgreSQL
+├── package.json              # workspace scripts only
 ├── pnpm-lock.yaml
-├── pnpm-workspace.yaml
-└── README.md
+└── pnpm-workspace.yaml
 ```
-
-This is a working architectural view based on the repository structure inspected on 2026-11-09. It is not a claim that every listed directory is complete or that no additional files exist. The API screenshot shows `identity` and `organization` under `apps/api/src/modules`; the exact contents and maturity of all modules must be verified from source code.
 
 ### 4.1 Workspace responsibilities
 
@@ -209,15 +189,16 @@ The exact package list beyond `apps/api` and `apps/web` is not fixed by this doc
 |---|---|
 | `identity` | Global User identity, registration, authentication, and Session lifecycle |
 | `organization` | Organization lifecycle and organization-level behavior |
-| `memberships` | Membership lifecycle, organization-scoped roles, activation, and removal |
-| `invitations` | Invitation creation, resend policy, acceptance, revocation, and expiration behavior |
-| `projects` | Project lifecycle and organization ownership |
-| `issues` | Issue lifecycle, numbering, status, priority, assignment, labels, and issue-specific rules |
-| `comments` | Comment creation, editing/deletion behavior, and comment lifecycle |
-| `activities` | Append-only history records for defined meaningful actions |
-| `notifications` | User notification inbox and read/unread lifecycle |
+| `membership` | Membership lifecycle, organization-scoped roles, activation, and removal |
+| `invitation` | Invitation creation, resend policy, acceptance, revocation, and expiration behavior |
+| `project` | Project lifecycle and organization ownership |
+| `issue` | Issue lifecycle, numbering, status, priority, assignment, and Issue–Label association |
+| `label` | Organization-scoped Label catalogue |
+| `comment` | Comment creation, editing/deletion behavior, and comment lifecycle |
+| `activity` | Append-only history records for defined meaningful actions |
+| `notification` | User notification inbox and read/unread lifecycle |
 
-The table defines logical ownership. It does not mandate that every row already exists as a folder in the repository.
+Module folders under `apps/api/src/modules/` use these singular names. A module folder is created by the slice that first needs it, not in advance.
 
 ### 5.2 Module ownership rules
 
@@ -237,7 +218,7 @@ For invitation email:
 1. The Invitations use case applies invitation rules.
 2. The invitation state change and Outbox record are committed in the same database transaction.
 3. A worker reads pending Outbox records and attempts delivery.
-4. Delivery failures follow the retry and terminal-failure policy in the Database Specification and requirements.
+4. Delivery failures follow the retry and terminal-failure policy in the Database design and requirements.
 5. Email provider delivery does not determine whether the invitation transaction itself committed.
 
 The invitation domain owns the invitation delivery policy. Infrastructure owns the generic mechanics for claiming, retrying, and dispatching Outbox work.
@@ -361,6 +342,38 @@ A port is justified when it protects a real boundary, supports meaningful testin
 
 Do not build a generic dependency-injection framework for V1. Explicit composition is sufficient unless the code demonstrates a stronger need.
 
+### 7.2 Concrete layout and persistence boundary
+
+[ADR-0009](../adr/0009-pragmatic-persistence-boundary.md) turns the rules above into one concrete convention:
+
+```text
+src/
+├── app.ts                    # Express app: middleware, routes, error handler (no listen)
+├── server.ts                 # composition root: listen, graceful shutdown
+├── config/                   # env (Zod-validated), logger
+├── db/
+│   ├── client.ts             # the only module that constructs PrismaClient
+│   └── transaction.ts        # runInTransaction(fn) and the Db/Tx types
+├── http/                     # error envelope, validation middleware, pagination, request id
+└── modules/<module>/
+    ├── <module>.routes.ts      # presentation: routes + middleware
+    ├── <module>.controller.ts  # presentation: parse → call service → map response
+    ├── <module>.schema.ts      # presentation: Zod request schemas
+    ├── <module>.service.ts     # application: use cases, authorization, transaction boundary
+    ├── <module>.rules.ts       # domain: pure functions (transitions, invariants); optional
+    ├── <module>.repository.ts  # infrastructure: Prisma queries, accepts a Db handle
+    └── <module>.mapper.ts      # presentation: persistence → response DTO; optional
+```
+
+Rules:
+
+- Only `db/` and `*.repository.ts` import the Prisma client or generated Prisma types.
+- A service never imports `prisma`. It calls `runInTransaction(async (tx) => …)` and passes `tx` to repositories. `Tx` is an opaque type alias exported by `db/transaction.ts`; services treat it as a handle and never call Prisma methods on it.
+- Every repository function for an organization-scoped table takes `organizationId` as a required parameter and includes it in the `WHERE` clause.
+- `*.rules.ts` imports nothing from Express, Prisma, or other layers.
+- A module may call another module's service or repository only through that module's exported functions, inside the same transaction when atomicity requires it.
+- Database errors that represent expected conflicts (unique violation, zero-row conditional update) are translated to application errors in the repository or service, never in the controller.
+
 ---
 
 ## 8. Cross-module communication
@@ -424,7 +437,7 @@ Use optimistic concurrency control where the API contract defines version-based 
 
 Do not assume that multiple database calls are atomic unless they execute inside the same transaction.
 
-Detailed constraints, indexes, locking order, retention, and transaction requirements belong to the Database Specification. This document does not redefine them.
+Detailed constraints, indexes, locking order, retention, and transaction requirements belong to the Database design. This document does not redefine them.
 
 ### 9.3 Migrations
 
@@ -444,7 +457,7 @@ These are related but distinct responsibilities.
 
 Authentication establishes the global User identity and the validity of the current Session.
 
-The identity/session implementation follows the Domain Map and API Specification. Do not infer identity from client-supplied identifiers.
+The identity/session implementation follows the Domain Model and API Contract. Do not infer identity from client-supplied identifiers.
 
 ### 10.2 Tenant context
 
@@ -456,7 +469,7 @@ A client-supplied `organizationId`, `membershipId`, `userId`, or resource relati
 
 Authorization determines whether the actor's Membership role and the applicable resource state permit the requested action.
 
-The permission matrix and role-specific rules belong to the Permissions Specification. Do not duplicate or invent permission rules here.
+The permission matrix and role-specific rules belong to the Permissions. Do not duplicate or invent permission rules here.
 
 ### 10.4 Resource and tenant integrity
 
@@ -508,7 +521,7 @@ Principles:
 2. A worker processes pending records independently of the original HTTP request.
 3. Workers must tolerate process interruption and retryable failures.
 4. Processing must be safe against duplicate execution where the operation can be repeated.
-5. Retry policy, maximum attempts, terminal failure behavior, and record retention follow the authoritative requirements and Database Specification.
+5. Retry policy, maximum attempts, terminal failure behavior, and record retention follow the authoritative requirements and Database design.
 6. A provider delivery failure must not retroactively roll back an already committed business transaction.
 7. Do not introduce Redis, a broker, or a separate worker service unless measured requirements justify the added infrastructure.
 
@@ -525,7 +538,7 @@ Keep error categories distinct:
 - **Infrastructure errors:** database, network, provider, or other technical failures.
 - **HTTP errors:** transport-level validation and response mapping.
 
-The Presentation boundary maps expected failures to the API Specification's status codes and error envelope.
+The Presentation boundary maps expected failures to the API Contract's status codes and error envelope.
 
 Rules:
 
@@ -533,9 +546,9 @@ Rules:
 - Do not convert every unexpected error into a validation error.
 - Do not swallow failures that must roll back a transaction.
 - Do not log passwords, raw session tokens, invitation tokens, or secrets.
-- Keep error codes stable and aligned with the API Specification.
+- Keep error codes stable and aligned with the API Contract.
 
-The API Specification owns the exact response contract.
+The API Contract owns the exact response contract.
 
 ---
 
@@ -564,54 +577,13 @@ A cross-cutting utility belongs in common/shared code only when multiple modules
 
 ## 15. Testing strategy
 
-Test behavior at the boundary where it can be verified most directly.
-
-| Test level | Primary purpose |
-|---|---|
-| Domain unit tests | Business rules, invariants, deterministic state transitions |
-| Application tests | Use-case orchestration, authorization decisions, transaction coordination |
-| Persistence/integration tests | PostgreSQL constraints, queries, transactions, locking, concurrency |
-| HTTP/API tests | Routes, middleware, validation, status codes, response contracts |
-| End-to-end tests | Critical workflows spanning multiple modules |
-
-### 15.1 High-risk verification areas
-
-At minimum, tests should cover:
-
-- A User from Organization A cannot access Organization B's resources.
-- A Member cannot perform actions reserved for higher roles.
-- A resource relationship cannot cross Organization boundaries.
-- The final Owner cannot be removed or demoted when the invariant would be violated.
-- Concurrent operations cannot violate ownership or session invariants.
-- Concurrent refresh requests cannot rotate the same Session more than once.
-- Version conflicts produce the API-defined conflict response.
-- A failed email delivery does not undo a committed Invitation.
-- A multi-record use case either commits all required records or rolls them all back.
-- Retention cleanup respects the current record state and its retention deadline.
-
-Do not mock the behavior a test is supposed to verify. A mocked repository cannot prove PostgreSQL constraints, locking, or transaction behavior.
-
-Numeric performance targets and representative benchmark workload remain open decisions. Do not claim performance validation until OD-15 is resolved and measurements exist.
+Test levels, required suites, and the high-risk scenarios that must be covered are defined in [Testing](../engineering/testing.md). The guiding rule: do not mock the behavior a test is supposed to verify. A mocked repository cannot prove PostgreSQL constraints, locking, or transaction behavior.
 
 ---
 
 ## 16. Deployment and operations
 
-The V1 operational baseline is:
-
-- One VPS
-- Docker Compose
-- One API application
-- One PostgreSQL database
-- Persistent database storage
-- Background processing for Outbox and scheduled cleanup
-- GitHub Actions for CI
-
-The API and database may run as separate containers on the same host. The database should not be exposed publicly and should be reachable through the intended internal network.
-
-Do not introduce multi-instance deployment, Kubernetes, Redis, or high-availability infrastructure without an explicit decision.
-
-Backup retention, RPO, and RTO remain open decisions in the current planning baseline. Operational recovery readiness must not be claimed until backup restoration and recovery procedures have been tested.
+V1 runs as one API instance and one PostgreSQL database on a single VPS using Docker Compose, with the Outbox worker as a separate process from the same codebase. Details are in [Operations](../engineering/operations.md). Multi-instance deployment, Kubernetes, Redis, or high-availability infrastructure require a new ADR.
 
 ---
 
@@ -667,48 +639,18 @@ Do not silently change architecture through a local refactor that alters module 
 
 ---
 
-## 19. Open decisions and known limits
+## 19. Known limits
 
-The following are not settled by this document:
+- One API instance: in-memory rate limiting and the connection budget in [Database §7.11](database.md#711-single-vps-connection-and-timeout-baseline) assume a single process.
+- Additional shared workspace packages (for example a generated API client for `apps/web`) are not created until the web app consumes the API.
 
-| Item | Status | Required before |
-|---|---|---|
-| OD-15: Representative performance workload and benchmark profile | Open | Claiming performance targets are validated |
-| OD-16: Backup retention, RPO, and RTO | Open | Claiming operational recovery objectives are validated |
-| Exact internal folder layout for every module | Evolve from implementation | Creating or reorganizing module structure |
-| Exact application-to-infrastructure port strategy | Decide from concrete use cases | Implementing the relevant integration |
-| Additional shared workspace packages | Not currently mandated | Introducing cross-application shared code |
-
-The current screenshots establish that the repository is a pnpm monorepo with `apps/api` and `apps/web`, and that the API currently contains `common`, `config`, `generated`, `middleware`, `modules`, and `types` areas, with `identity` and `organization` visible under `modules`. They do not establish the complete contents, dependency graph, test coverage, or conformance of the current code to this architecture.
+Open decisions are tracked in the [Roadmap](../plan/roadmap.md#open-decisions).
 
 ---
 
 ## 20. Sources of truth
 
-This document consolidates the accepted architecture baseline recorded in [`ADR-001`](./ADR-001-architecture-baseline.md) and provides implementation guidance. It does not supersede detailed specifications.
-
-| Subject | Authoritative source |
-|---|---|
-| Product goals, V1 scope, non-goals | PRD V1.2 |
-| Functional behavior, business rules, NFRs | Requirements Specification V1.2 |
-| Entities, relationships, lifecycle, domain invariants | Domain Map V1.2 |
-| Role/action authorization | Permissions Specification V1.1 |
-| HTTP endpoints, validation, status codes, response contracts | API Specification |
-| Physical schema, constraints, indexes, locking, retention, persistence | Database Specification V1.3 |
-| Implementation order and Definition of Done | Implementation Plan |
-| Architecture rationale and accepted architecture baseline | `ADR-001-architecture-baseline.md` |
-| Consolidated architecture guidance and implementation boundaries | This `architecture.md` |
-| Actual implementation state | Current repository code, migrations, and tests |
-
-If two authoritative documents conflict:
-
-1. Identify the exact conflicting statements.
-2. Determine which document owns the subject.
-3. Resolve the issue in that owning document.
-4. Update dependent documents and tests.
-5. Do not silently merge conflicting rules.
-
-The repository's current code is the source of truth for what is actually implemented. The specifications are the source of truth for what the system is intended to do.
+The authority map for all documents is in the [documentation index](../README.md#authority-map). The repository's code, migrations, and tests are the source of truth for what is implemented; the specifications are the source of truth for what the system is intended to do.
 
 ---
 
@@ -733,9 +675,9 @@ Do not:
 - Invent requirements to fill specification gaps.
 - Treat a proposed design as implemented.
 - Add dependencies or infrastructure without justification.
-- import another module's private implementation.
-- leak Prisma or Express types into Domain.
-- bypass tenant-scoped authorization.
-- claim production readiness, performance validation, or recovery readiness without evidence.
+- Import another module's private implementation.
+- Leak Prisma or Express types into Domain.
+- Bypass tenant-scoped authorization.
+- Claim production readiness, performance validation, or recovery readiness without evidence.
 
 The governing principle is simple: preserve domain correctness and explicit boundaries with the least complexity that satisfies V1.
