@@ -16,7 +16,7 @@ How V1 is run: hosting, configuration, deployment, health, observability, backup
 - PostgreSQL is reachable only on the internal Docker network and stores data on a persistent volume.
 - HTTPS terminates at a reverse proxy on the VPS before any public use. When the proxy is added, Express `trust proxy` is set to it ([Security §4](../design/security.md#4-rate-limiting-and-input-limits)).
 - Single point of failure is an accepted V1 limitation. Kubernetes, autoscaling, and multiple API instances are out of scope.
-- The hosting provider is not chosen yet.
+- Provider selection criteria (choice is made at M6, REL-06): Singapore or Jakarta region, at least 2 GB RAM (API, worker, and PostgreSQL on one host), Docker support, snapshots, fixed monthly price. Candidates to compare then: DigitalOcean, Vultr, Akamai/Linode, Biznet Gio. Prices and regions are checked at decision time, not assumed.
 
 ## 2. Configuration
 
@@ -32,7 +32,10 @@ How V1 is run: hosting, configuration, deployment, health, observability, backup
 | `DATABASE_URL` | PostgreSQL connection string (secret) |
 | `CORS_ORIGINS` | Comma-separated allowed origins |
 | `OUTBOX_ENCRYPTION_KEY` | Base64 256-bit key for invitation token payloads (secret; added with the Invitation slice) |
-| `EMAIL_PROVIDER_API_KEY` | Email provider credential (secret; added with the Invitation slice) |
+| `EMAIL_PROVIDER_API_KEY` | Production email provider credential (secret; added with the Invitation slice) |
+| `SMTP_URL` | Development and test email transport, pointing at Mailpit (added with the Invitation slice) |
+
+**Email.** Code depends on one `EmailSender` interface with two implementations: SMTP for development and tests, sending to [Mailpit](https://mailpit.axllent.org/) (a local SMTP catcher in Docker Compose with a web inbox, so no real email is ever sent), and the production provider adapter. The production provider is chosen at the end of M2 from Resend, Postmark, Amazon SES, or Brevo, comparing deliverability, free tier, and API simplicity at that time.
 
 ## 3. Deployment and migrations
 
@@ -70,7 +73,17 @@ Both are unauthenticated, return `{ "data": { "status": "ok" } }` or `503` with 
 ## 6. Performance and capacity
 
 - Measure first: no optimization without a profile or a query plan showing the bottleneck.
-- Latency targets come from the [PRD §8.3](../product/prd.md#83-performance) and are claims only after a documented load test (open decision: workload profile).
+- Latency targets come from the [PRD §8.3](../product/prd.md#83-performance) and are claims only after a load test with this profile:
+
+  | Aspect | Value |
+  |---|---|
+  | Tool | k6 |
+  | Dataset | 50 Organizations, 500 Users, 200 Projects, 50,000 Issues, 200,000 Activities |
+  | Load | 50 concurrent virtual users for 10 minutes, 80% reads / 20% writes |
+  | Environment | Same VPS size as production, API and PostgreSQL co-located |
+  | Report | p50/p95/p99 per route, error rate, CPU, memory, DB connections |
+
+  The profile is revised after the first baseline if it proves unrepresentative.
 - Vertical scaling first. Horizontal scaling requires shared rate-limit state and a new ADR.
 - Connection pool and timeouts start from [Database §7.11](../design/database.md#711-single-vps-connection-and-timeout-baseline).
 
@@ -91,7 +104,10 @@ Each runbook is a short procedure in `docs/runbooks/`, written when the thing it
 
 - Daily logical backup with `pg_dump`, encrypted, stored off the VPS.
 - Restore is tested into a separate database on a schedule; an untested backup does not count.
-- **Open decision:** retention period, RPO, and RTO. A starting proposal is 7 daily plus 4 weekly backups, RPO 24 hours, RTO 4 hours; it becomes a commitment only after a successful restore drill. WAL archiving and point-in-time recovery are out of scope for V1.
+- Retention: 7 daily and 4 weekly backups.
+- Objectives: **RPO 24 hours** (at most one day of data lost), **RTO 4 hours** (service restored within four hours). They become commitments only after the first successful restore drill (REL-05); until then they are targets.
+- Backup job success is monitored; a missed backup is an alert.
+- WAL archiving and point-in-time recovery are out of scope for V1.
 
 ## 9. Incidents
 

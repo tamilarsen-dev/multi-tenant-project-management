@@ -343,7 +343,7 @@ Initial V1 performance acceptance targets:
 | Valid-request error rate under test | < 1% |
 | Unauthorized cross-tenant access | 0 successful cases |
 
-Latency targets must be measured under documented test conditions and a defined workload. The workload profile is an open decision (see [Roadmap — Open decisions](../plan/roadmap.md#open-decisions)); until it is defined, these are engineering targets, not measured performance claims.
+Latency targets must be measured under documented test conditions and a defined workload. The workload profile is defined in [Operations §6](../engineering/operations.md#6-performance-and-capacity); until a load test with that profile has run, these are engineering targets, not measured performance claims.
 
 ### 8.4 Maintainability
 
