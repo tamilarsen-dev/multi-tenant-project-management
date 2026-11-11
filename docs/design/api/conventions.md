@@ -177,7 +177,7 @@ Collections use cursor (keyset) pagination ([ADR-0004](../../adr/0004-cursor-pag
 - `PATCH` is a partial update. Omitted fields do not change. `null` clears a field only if the field is nullable.
 - Resources with a `version` (Organization, Membership, Project, Issue, Comment) require the client to send the `version` it last read.
 - The server performs a conditional update on `id`, tenant, and `version`. A successful real change increments `version` by exactly one and updates `updatedAt`.
-- A request whose values equal the current values is a **no-op**: `200` with the current representation, no version change, no Activity, no Notification.
+- A request whose values equal the current values is a **no-op**: `200` with the current representation, no version change, no Activity, no Notification. The no-op check runs before the version check, so a no-op with a stale `version` still returns `200`: nothing would be overwritten.
 - A stale `version` returns `409 VERSION_CONFLICT` with `details.currentVersion`. The server never retries automatically; the client re-reads and reconciles.
 - Version-in-body was chosen over `ETag`/`If-Match`; see [ADR-0007](../../adr/0007-concurrency-control.md).
 

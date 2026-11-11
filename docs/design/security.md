@@ -46,7 +46,7 @@ Principles: defense in depth, deny by default, enforcement on the server, failur
 | Scope | Applies to |
 |---|---|
 | Global per IP | Every request |
-| Per IP and per normalized email | `POST /auth/login`, `POST /auth/register` |
+| Per IP and per normalized email | `POST /auth/login`, `POST /auth/register` — not implemented yet; scheduled in M6 (see [Roadmap](../plan/roadmap.md)) |
 | Per Invitation | Resend cooldown and quota (domain rule, not middleware) |
 
 - Algorithm: the library's window counter for V1; a token bucket is acceptable if a library supports it. Thresholds live in configuration, not scattered constants, and are tuned from measurements.
