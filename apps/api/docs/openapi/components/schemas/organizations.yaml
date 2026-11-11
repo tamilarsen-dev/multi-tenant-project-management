@@ -1,56 +1,129 @@
+# DTOs: docs/design/api/contract.md §2.3–2.4.
+OrganizationName:
+  type: string
+  minLength: 1
+  maxLength: 100
+  description: Trimmed; must be non-empty afterwards. Not unique.
+  example: Acme Engineering
+
+Version:
+  type: integer
+  minimum: 1
+  description: Optimistic-concurrency token (ADR-0007). Send the version you last read.
+
 CreateOrganizationRequest:
   type: object
-  description: |
-    Unknown properties are stripped by the server.
-  required:
-    - name
+  additionalProperties: false
+  required: [name]
   properties:
     name:
-      type: string
-      minLength: 1
-      maxLength: 100
-      description: |
-        Organization name. The server trims leading and trailing
-        whitespace before validation and storage.
-        The resulting name must contain between 1 and 100 characters.
-      example: Acme Corporation
+      $ref: "#/OrganizationName"
+
+UpdateOrganizationRequest:
+  type: object
+  additionalProperties: false
+  required: [name, version]
+  properties:
+    name:
+      $ref: "#/OrganizationName"
+    version:
+      $ref: "#/Version"
 
 Organization:
   type: object
-  required:
-    - id
-    - name
-    - createdAt
-    - updatedAt
+  additionalProperties: false
+  required: [id, name, version, createdAt, updatedAt]
   properties:
     id:
       type: string
       format: uuid
-      example: 550e8400-e29b-41d4-a716-446655440000
-
     name:
       type: string
-      example: Acme Corporation
-
+    version:
+      $ref: "#/Version"
     createdAt:
       type: string
       format: date-time
-      example: "2026-11-06T06:00:00.000Z"
-
     updatedAt:
       type: string
       format: date-time
-      example: "2026-11-06T06:00:00.000Z"
 
-CreateOrganizationResponse:
+OrganizationRole:
+  type: string
+  enum: [OWNER, ADMIN, MEMBER]
+
+MembershipStatus:
+  type: string
+  enum: [ACTIVE, REMOVED]
+
+Membership:
   type: object
-  required:
-    - data
+  additionalProperties: false
+  required: [id, organizationId, user, role, status, version, joinedAt, removedAt, createdAt, updatedAt]
+  properties:
+    id:
+      type: string
+      format: uuid
+    organizationId:
+      type: string
+      format: uuid
+    user:
+      type: object
+      additionalProperties: false
+      required: [id, email, displayName]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+    role:
+      $ref: "#/OrganizationRole"
+    status:
+      $ref: "#/MembershipStatus"
+    version:
+      $ref: "#/Version"
+    joinedAt:
+      type: string
+      format: date-time
+    removedAt:
+      type: [string, "null"]
+      format: date-time
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time
+
+OrganizationWithMembership:
+  type: object
+  additionalProperties: false
+  required: [organization, membership]
+  description: The Organization and the caller's own Membership in it.
+  properties:
+    organization:
+      $ref: "#/Organization"
+    membership:
+      $ref: "#/Membership"
+
+OrganizationResponse:
+  type: object
+  required: [data]
   properties:
     data:
-      type: object
-      required:
-        - organization
-      properties:
-        organization:
-          $ref: "#/Organization"
+      $ref: "#/OrganizationWithMembership"
+
+OrganizationListResponse:
+  type: object
+  required: [data, pagination]
+  properties:
+    data:
+      type: array
+      items:
+        $ref: "#/OrganizationWithMembership"
+    pagination:
+      $ref: "./pagination.yaml#/Pagination"

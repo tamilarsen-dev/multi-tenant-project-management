@@ -1,19 +1,39 @@
-check:
+liveness:
   get:
-    tags:
-      - Health
-    summary: Check API health
-    description: |
-      Checks whether the API process is running and able
-      to respond to HTTP requests.
-    operationId: getHealth
+    tags: [Health]
+    summary: Liveness
+    description: The process is up. Never touches the database.
+    operationId: getLiveness
+    security: []
     responses:
       "200":
-        description: API is healthy
+        description: Alive.
         content:
           application/json:
             schema:
               $ref: "../components/schemas/health.yaml#/HealthResponse"
-            example:
-              data:
-                status: ok
+      "429":
+        $ref: "../components/responses.yaml#/RateLimited"
+
+readiness:
+  get:
+    tags: [Health]
+    summary: Readiness
+    description: The process can serve traffic (database reachable within its timeout).
+    operationId: getReadiness
+    security: []
+    responses:
+      "200":
+        description: Ready.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/health.yaml#/HealthResponse"
+      "503":
+        description: Not ready. The body never includes the underlying error.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/health.yaml#/UnavailableResponse"
+      "429":
+        $ref: "../components/responses.yaml#/RateLimited"

@@ -281,14 +281,11 @@ CREATE TABLE sessions (
 CREATE INDEX sessions_user_id_idx
   ON sessions(user_id);
 
-CREATE INDEX sessions_active_expiration_idx
-  ON sessions(expires_at)
-  WHERE revoked_at IS NULL;
-
-CREATE INDEX sessions_revoked_cleanup_idx
-  ON sessions(revoked_at)
-  WHERE revoked_at IS NOT NULL;
+CREATE INDEX sessions_expires_at_idx
+  ON sessions(expires_at);
 ```
+
+Partial indexes for session cleanup (`WHERE revoked_at IS NULL` / `IS NOT NULL`) are deferred to the cleanup job: they are added with that job, in hand-written SQL, once a query needs them. `memberships_user_status_idx` is a plain composite index rather than a partial one because the schema file cannot declare partial indexes and an undeclared index would show up as drift; with only two statuses the difference is negligible at V1 scale.
 
 Rules:
 
@@ -371,9 +368,8 @@ CREATE TABLE memberships (
   )
 );
 
-CREATE INDEX memberships_active_user_lookup_idx
-  ON memberships(user_id, organization_id)
-  WHERE status = 'ACTIVE';
+CREATE INDEX memberships_user_status_idx
+  ON memberships(user_id, status);
 
 CREATE INDEX memberships_org_roster_idx
   ON memberships(organization_id, status, joined_at DESC, id DESC);

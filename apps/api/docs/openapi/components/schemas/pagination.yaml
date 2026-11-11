@@ -1,17 +1,15 @@
-PaginationMeta:
+# ADR-0004: cursor pagination.
+Pagination:
   type: object
-  required:
-    - nextCursor
-    - hasMore
+  additionalProperties: false
+  required: [nextCursor, hasMore, totalCount]
   properties:
     nextCursor:
-      type:
-        - string
-        - "null"
-      description: Cursor for retrieving the next page.
-      example: null
-
+      type: [string, "null"]
+      description: Opaque. Pass back unchanged as `cursor`; `null` on the last page.
     hasMore:
       type: boolean
-      description: Indicates whether more records are available.
-      example: false
+    totalCount:
+      type: integer
+      minimum: 0
+      description: Matching items across all pages, under the same filters.

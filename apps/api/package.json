@@ -16,7 +16,8 @@
     "docs:bundle": "scalar document bundle ./docs/openapi/openapi.yaml --output ./docs/openapi/openapi-bundled.yaml --no-input",
     "db:test:check": "node --env-file=.env.test ./scripts/assert-test-database.mjs",
     "db:test:status": "pnpm db:test:check && node --env-file=.env.test ./node_modules/prisma/build/index.js migrate status",
-    "db:test:migrate": "pnpm db:test:check && node --env-file=.env.test ./node_modules/prisma/build/index.js migrate deploy"
+    "db:test:migrate": "pnpm db:test:check && node --env-file=.env.test ./node_modules/prisma/build/index.js migrate deploy",
+    "docs:lint": "redocly lint ./docs/openapi/openapi.yaml --config ./docs/openapi/redocly.yaml"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",
@@ -34,6 +35,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@redocly/cli": "1.34.5",
     "@scalar/cli": "^2.14.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",

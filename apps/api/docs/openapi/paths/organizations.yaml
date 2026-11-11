@@ -1,19 +1,11 @@
-create:
+# docs/design/api/contract.md §4 — tenant isolation: ADR-0006, OCC: ADR-0007.
+collection:
   post:
-    tags:
-      - Organizations
-    summary: Create an organization
+    tags: [Organizations]
+    summary: Create an Organization
     description: |
-      Creates a new organization.
-
-      The authenticated user is automatically assigned the OWNER role
-      in the newly created organization.
-
-      Organization creation and owner membership assignment are
-      performed atomically within a database transaction.
-
-      Leading and trailing whitespace in the organization name
-      is trimmed before validation and storage.
+      Creates the Organization, the caller's ACTIVE OWNER Membership, and an
+      `ORGANIZATION_CREATED` Activity in one transaction.
     operationId: createOrganization
     security:
       - BearerAuth: []
@@ -23,61 +15,116 @@ create:
         application/json:
           schema:
             $ref: "../components/schemas/organizations.yaml#/CreateOrganizationRequest"
-          example:
-            name: Acme Corporation
     responses:
       "201":
-        description: Organization created successfully.
+        description: Created.
+        headers:
+          Location:
+            schema:
+              type: string
+              example: /api/v1/organizations/0b6f6c1e-8d2a-4f7e-9b2f-3a4c5d6e7f80
         content:
           application/json:
             schema:
-              $ref: "../components/schemas/organizations.yaml#/CreateOrganizationResponse"
-            example:
-              data:
-                organization:
-                  id: 550e8400-e29b-41d4-a716-446655440000
-                  name: Acme Corporation
-                  createdAt: "2026-11-06T06:00:00.000Z"
-                  updatedAt: "2026-11-06T06:00:00.000Z"
-
+              $ref: "../components/schemas/organizations.yaml#/OrganizationResponse"
       "400":
-        description: Request validation failed.
-        content:
-          application/json:
-            schema:
-              $ref: "../components/schemas/error.yaml#/ErrorResponse"
-            example:
-              error:
-                code: VALIDATION_ERROR
-                message: Request validation failed
-                details:
-                  issues:
-                    - code: too_small
-                      origin: string
-                      minimum: 1
-                      inclusive: true
-                      path:
-                        - name
-                      message: "Too small: expected string to have >=1 characters"
-
+        $ref: "../components/responses.yaml#/ValidationError"
       "401":
-        description: Authentication is missing, invalid, expired, or revoked.
-        content:
-          application/json:
-            schema:
-              $ref: "../components/schemas/error.yaml#/ErrorResponse"
-            example:
-              error:
-                code: UNAUTHENTICATED
-                message: Authentication is required
-
+        $ref: "../components/responses.yaml#/Unauthenticated"
+      "415":
+        $ref: "../components/responses.yaml#/UnsupportedMediaType"
       "500":
-        description: Unexpected server error.
+        $ref: "../components/responses.yaml#/InternalError"
+
+  get:
+    tags: [Organizations]
+    summary: List my Organizations
+    description: Organizations where the caller has an ACTIVE Membership, newest first.
+    operationId: listOrganizations
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: "../components/parameters.yaml#/limit"
+      - $ref: "../components/parameters.yaml#/cursor"
+    responses:
+      "200":
+        description: One page.
         content:
           application/json:
             schema:
-              $ref: "../components/schemas/error.yaml#/ErrorResponse"
-            example:
-              error:
-                code: INTERNAL_SERVER_ERROR
-                message: An unexpected error occurred
+              $ref: "../components/schemas/organizations.yaml#/OrganizationListResponse"
+      "400":
+        $ref: "../components/responses.yaml#/ValidationError"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthenticated"
+      "500":
+        $ref: "../components/responses.yaml#/InternalError"
+
+item:
+  parameters:
+    - name: organizationId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  get:
+    tags: [Organizations]
+    summary: Get an Organization
+    operationId: getOrganization
+    security:
+      - BearerAuth: []
+    responses:
+      "200":
+        description: The Organization and the caller's Membership.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/organizations.yaml#/OrganizationResponse"
+      "400":
+        $ref: "../components/responses.yaml#/ValidationError"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthenticated"
+      "404":
+        $ref: "../components/responses.yaml#/OrganizationNotFound"
+      "500":
+        $ref: "../components/responses.yaml#/InternalError"
+
+  patch:
+    tags: [Organizations]
+    summary: Rename an Organization
+    description: |
+      OWNER or ADMIN only. A name equal to the current one (after trimming) is a no-op:
+      200 with the unchanged resource and no Activity, checked before `version`.
+      Otherwise the version must match; the update increments it and records
+      `ORGANIZATION_UPDATED` in the same transaction.
+    operationId: updateOrganization
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/organizations.yaml#/UpdateOrganizationRequest"
+    responses:
+      "200":
+        description: Updated, or unchanged on a no-op.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/organizations.yaml#/OrganizationResponse"
+      "400":
+        $ref: "../components/responses.yaml#/ValidationError"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthenticated"
+      "403":
+        $ref: "../components/responses.yaml#/Forbidden"
+      "404":
+        $ref: "../components/responses.yaml#/OrganizationNotFound"
+      "409":
+        $ref: "../components/responses.yaml#/VersionConflict"
+      "415":
+        $ref: "../components/responses.yaml#/UnsupportedMediaType"
+      "500":
+        $ref: "../components/responses.yaml#/InternalError"

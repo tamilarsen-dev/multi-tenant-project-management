@@ -77,6 +77,13 @@ When two documents disagree, the owner wins and the other is corrected in the sa
 
 ## Change log
 
+### 2026-11-11 — M1 implementation
+
+- Database: `memberships_user_status_idx` replaces the partial active-user index; session cleanup partial indexes deferred to the cleanup job.
+- Conventions §9: the no-op check runs before the version check.
+- Security §4: the per-email auth limiter is deferred to M6.
+- Roadmap: M1 tasks done; current-state table rewritten.
+
 ### 2026-11-11 — Consolidation
 
 The documentation previously existed in three generations (an archive of stage-by-stage planning documents, six bundled decision records, and a newer set of versioned specifications plus audit reports), was excluded from Git by `.gitignore`, and contained contradictions. This change:

@@ -1,15 +1,23 @@
 HealthResponse:
   type: object
-  required:
-    - data
+  required: [data]
   properties:
     data:
       type: object
-      required:
-        - status
+      required: [status]
       properties:
         status:
           type: string
-          enum:
-            - ok
-          example: ok
+          enum: [ok]
+
+UnavailableResponse:
+  type: object
+  required: [data]
+  properties:
+    data:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [unavailable]

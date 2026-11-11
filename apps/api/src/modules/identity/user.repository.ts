@@ -1,30 +1,21 @@
-import { prisma } from "../../config/prisma.js";
+import { AppError } from "../../http/errors.js";
+import { isUniqueViolation } from "../../db/errors.js";
+import { db as defaultDb, type Db } from "../../db/transaction.js";
 
-type UserDbClient = Pick<typeof prisma, "user">;
+export function findUserByEmail(email: string, db: Db = defaultDb) {
+  return db.user.findUnique({ where: { email } });
+}
 
-export const userRepository = {
-  findById(id: string, db: UserDbClient = prisma) {
-    return db.user.findUnique({
-      where: { id },
-    });
-  },
-
-  findByEmail(email: string, db: UserDbClient = prisma) {
-    return db.user.findUnique({
-      where: { email },
-    });
-  },
-
-  create(
-    data: {
-      email: string;
-      passwordHash: string;
-      displayName: string;
-    },
-    db: UserDbClient = prisma,
-  ) {
-    return db.user.create({
-      data,
-    });
-  },
-};
+export async function createUser(
+  data: { email: string; passwordHash: string; displayName: string },
+  db: Db = defaultDb,
+) {
+  try {
+    return await db.user.create({ data });
+  } catch (error) {
+    if (isUniqueViolation(error, { constraint: "users_email_unique", fields: ["email"] })) {
+      throw new AppError("EMAIL_ALREADY_EXISTS");
+    }
+    throw error;
+  }
+}
