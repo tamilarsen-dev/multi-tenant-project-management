@@ -1,5 +1,0 @@
-Ada empat kelompok utama:
-1. Concept & Theory: mempelajari prinsip dan proses Software Engineering.
-2. Planning: menerapkan prinsip tersebut ke proyek secara bertahap.
-3. Decision Records: mencatat keputusan teknis dan alasan di baliknya. ---> INI YANG KITA PAKAI, INI DITURUNKAND ARI PLANNING
-4. Implementation Blueprint: menerjemahkan hasil analisis dan keputusan menjadi pedoman implementasi konkret. ---> INI YANG SEHARUSNYA DIPAKAI, INI DITURUNKAN DARI DECISION RECORDS
