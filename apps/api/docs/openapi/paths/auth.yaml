@@ -1,256 +1,138 @@
+# docs/design/api/contract.md §3 — sessions: ADR-0003.
 register:
   post:
-    tags:
-      - Authentication
-    summary: Register a new user
-    description: |
-      Creates a user account and an authenticated session.
-
-      The email address is trimmed and normalized to lowercase.
-      Email addresses must be globally unique.
-
-      The password is not trimmed or normalized.
-      The display name is not trimmed or normalized.
-    operationId: registerUser
+    tags: [Authentication]
+    summary: Register
+    description: Creates a User and a first Session atomically.
+    operationId: register
+    security: []
     requestBody:
       required: true
       content:
         application/json:
           schema:
             $ref: "../components/schemas/auth.yaml#/RegisterRequest"
-          example:
-            email: developer@example.com
-            password: "Correct-Horse-42!"
-            displayName: Alex Morgan
     responses:
       "201":
-        description: User registered successfully.
+        description: Registered and signed in.
         content:
           application/json:
             schema:
-              $ref: "../components/schemas/auth.yaml#/RegisterResponse"
-            example:
-              data:
-                user:
-                  id: 550e8400-e29b-41d4-a716-446655440000
-                  email: developer@example.com
-                  displayName: Alex Morgan
-                  createdAt: "2026-11-05T06:00:00.000Z"
-                sessionToken: "opaque-session-token"
-
+              $ref: "../components/schemas/auth.yaml#/AuthResponse"
       "400":
-        description: Request validation failed.
-        content:
-          application/json:
-            schema:
-              $ref: "../components/schemas/error.yaml#/ErrorResponse"
-            example:
-              error:
-                code: VALIDATION_ERROR
-                message: Request validation failed
-                details:
-                  issues:
-                    - code: invalid_format
-                      format: email
-                      path:
-                        - email
-                      message: Invalid email address
-
+        $ref: "../components/responses.yaml#/ValidationError"
       "409":
-        description: Email address is already registered.
+        description: "`EMAIL_ALREADY_EXISTS`."
         content:
           application/json:
             schema:
               $ref: "../components/schemas/error.yaml#/ErrorResponse"
-            example:
-              error:
-                code: CONFLICT
-                message: Email is already registered
-
+      "415":
+        $ref: "../components/responses.yaml#/UnsupportedMediaType"
+      "429":
+        $ref: "../components/responses.yaml#/RateLimited"
       "500":
-        description: Unexpected server error.
-        content:
-          application/json:
-            schema:
-              $ref: "../components/schemas/error.yaml#/ErrorResponse"
-            example:
-              error:
-                code: INTERNAL_SERVER_ERROR
-                message: An unexpected error occurred
+        $ref: "../components/responses.yaml#/InternalError"
 
 login:
   post:
-    tags:
-      - Authentication
-    summary: Authenticate a user
+    tags: [Authentication]
+    summary: Log in
     description: |
-      Authenticates a user using email and password.
-
-      Successful authentication creates a new session.
-      Multiple concurrent sessions are supported.
-
-      Invalid email or password produces the same error response
-      to avoid revealing whether an account exists.
-
-      The email address is trimmed and normalized to lowercase.
-      The password is not trimmed or normalized.
-    operationId: loginUser
+      Issues a new Session. An unknown email and a wrong password return the same
+      `INVALID_CREDENTIALS` response with comparable timing.
+    operationId: login
+    security: []
     requestBody:
       required: true
       content:
         application/json:
           schema:
             $ref: "../components/schemas/auth.yaml#/LoginRequest"
-          example:
-            email: developer@example.com
-            password: "Correct-Horse-42!"
     responses:
       "200":
-        description: User authenticated successfully.
+        description: Signed in.
         content:
           application/json:
             schema:
-              $ref: "../components/schemas/auth.yaml#/LoginResponse"
-            example:
-              data:
-                user:
-                  id: 550e8400-e29b-41d4-a716-446655440000
-                  email: developer@example.com
-                  displayName: Alex Morgan
-                  createdAt: "2026-11-05T06:00:00.000Z"
-                sessionToken: "opaque-session-token"
-
+              $ref: "../components/schemas/auth.yaml#/AuthResponse"
       "400":
-        description: Request validation failed.
-        content:
-          application/json:
-            schema:
-              $ref: "../components/schemas/error.yaml#/ErrorResponse"
-            example:
-              error:
-                code: VALIDATION_ERROR
-                message: Request validation failed
-                details:
-                  issues:
-                    - code: invalid_format
-                      format: email
-                      path:
-                        - email
-                      message: Invalid email address
-
+        $ref: "../components/responses.yaml#/ValidationError"
       "401":
-        description: Invalid email or password.
+        description: "`INVALID_CREDENTIALS`."
+        headers:
+          WWW-Authenticate:
+            schema:
+              type: string
+              enum: [Bearer]
         content:
           application/json:
             schema:
               $ref: "../components/schemas/error.yaml#/ErrorResponse"
-            example:
-              error:
-                code: UNAUTHENTICATED
-                message: Invalid email or password
-
+      "415":
+        $ref: "../components/responses.yaml#/UnsupportedMediaType"
+      "429":
+        $ref: "../components/responses.yaml#/RateLimited"
       "500":
-        description: Unexpected server error.
+        $ref: "../components/responses.yaml#/InternalError"
+
+refresh:
+  post:
+    tags: [Authentication]
+    summary: Rotate the session
+    description: |
+      Atomically revokes the presented Session and issues a new one. The new `expiresAt`
+      is `min(now + 7 days, absoluteExpiresAt)`; `absoluteExpiresAt` is inherited.
+      Of concurrent refreshes with the same token exactly one succeeds. A revoked
+      token is always `INVALID_SESSION`.
+    operationId: refreshSession
+    security:
+      - BearerAuth: []
+    responses:
+      "200":
+        description: New session. The old token no longer works.
         content:
           application/json:
             schema:
-              $ref: "../components/schemas/error.yaml#/ErrorResponse"
-            example:
-              error:
-                code: INTERNAL_SERVER_ERROR
-                message: An unexpected error occurred
+              $ref: "../components/schemas/auth.yaml#/RefreshResponse"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthenticated"
+      "429":
+        $ref: "../components/responses.yaml#/RateLimited"
+      "500":
+        $ref: "../components/responses.yaml#/InternalError"
+
+logout:
+  post:
+    tags: [Authentication]
+    summary: Log out
+    description: Revokes the current Session.
+    operationId: logout
+    security:
+      - BearerAuth: []
+    responses:
+      "204":
+        description: Revoked.
+      "401":
+        $ref: "../components/responses.yaml#/Unauthenticated"
+      "500":
+        $ref: "../components/responses.yaml#/InternalError"
 
 me:
   get:
-    tags:
-      - Authentication
-    summary: Get current user
-    description: |
-      Returns the authenticated user's information.
-
-      Requires a valid Bearer session token.
+    tags: [Authentication]
+    summary: Current user
     operationId: getCurrentUser
     security:
       - BearerAuth: []
     responses:
       "200":
-        description: Current user retrieved successfully.
+        description: The authenticated User.
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - data
-              properties:
-                data:
-                  type: object
-                  required:
-                    - user
-                  properties:
-                    user:
-                      $ref: "../components/schemas/auth.yaml#/AuthUser"
-            example:
-              data:
-                user:
-                  id: 550e8400-e29b-41d4-a716-446655440000
-                  email: developer@example.com
-                  displayName: Alex Morgan
-
+              $ref: "../components/schemas/auth.yaml#/MeResponse"
       "401":
-        description: Authentication is missing, invalid, expired, or revoked.
-        content:
-          application/json:
-            schema:
-              $ref: "../components/schemas/error.yaml#/ErrorResponse"
-            example:
-              error:
-                code: UNAUTHENTICATED
-                message: Authentication is required
-
+        $ref: "../components/responses.yaml#/Unauthenticated"
       "500":
-        description: Unexpected server error.
-        content:
-          application/json:
-            schema:
-              $ref: "../components/schemas/error.yaml#/ErrorResponse"
-            example:
-              error:
-                code: INTERNAL_SERVER_ERROR
-                message: An unexpected error occurred
-
-logout:
-  post:
-    tags:
-      - Authentication
-    summary: Log out current session
-    description: |
-      Revokes the session associated with the supplied Bearer token.
-      The revoked session can no longer authenticate requests.
-    operationId: logoutCurrentSession
-    security:
-      - BearerAuth: []
-    responses:
-      "204":
-        description: Session revoked successfully. No response body is returned.
-
-      "401":
-        description: Authentication is missing, invalid, expired, or revoked.
-        content:
-          application/json:
-            schema:
-              $ref: "../components/schemas/error.yaml#/ErrorResponse"
-            example:
-              error:
-                code: UNAUTHENTICATED
-                message: Authentication is required
-
-      "500":
-        description: Unexpected server error.
-        content:
-          application/json:
-            schema:
-              $ref: "../components/schemas/error.yaml#/ErrorResponse"
-            example:
-              error:
-                code: INTERNAL_SERVER_ERROR
-                message: An unexpected error occurred
+        $ref: "../components/responses.yaml#/InternalError"

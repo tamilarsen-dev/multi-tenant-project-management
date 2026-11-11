@@ -1,0 +1,15 @@
+limit:
+  name: limit
+  in: query
+  schema:
+    type: integer
+    minimum: 1
+    maximum: 100
+    default: 20
+cursor:
+  name: cursor
+  in: query
+  description: "`pagination.nextCursor` from the previous page. Unknown or malformed → `VALIDATION_ERROR`."
+  schema:
+    type: string
+    maxLength: 512

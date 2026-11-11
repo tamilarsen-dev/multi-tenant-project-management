@@ -71,8 +71,22 @@ jobs:
       - name: Apply database migrations
         run: pnpm --filter api exec prisma migrate deploy --config prisma7.config.ts
 
+      - name: Check schema drift
+        # The migrated database must match schema.prisma exactly (exit 2 = drift).
+        run: >-
+          pnpm --filter api exec prisma migrate diff --config prisma7.config.ts
+          --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+
       - name: Lint
         run: pnpm lint
+
+      - name: Lint OpenAPI
+        run: pnpm --filter api docs:lint
+
+      - name: Check OpenAPI bundle is current
+        run: |
+          pnpm --filter api docs:bundle
+          git diff --exit-code -- apps/api/docs/openapi/openapi-bundled.yaml
 
       - name: Typecheck
         run: pnpm typecheck

@@ -1,0 +1,90 @@
+# Shared error responses. Each names the codes it can carry for the operation family.
+ValidationError:
+  description: "`VALIDATION_ERROR` (with `details.fields`) or `INVALID_JSON`."
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/ErrorResponse"
+      example:
+        error:
+          code: VALIDATION_ERROR
+          message: Request validation failed
+          details:
+            fields:
+              - path: [name]
+                code: too_small
+                message: "Too small: expected string to have >=1 characters"
+
+Unauthenticated:
+  description: "`MISSING_AUTHENTICATION` or `INVALID_SESSION` (unknown, expired, or revoked token)."
+  headers:
+    WWW-Authenticate:
+      schema:
+        type: string
+        enum: [Bearer]
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/ErrorResponse"
+      example:
+        error:
+          code: INVALID_SESSION
+          message: The session is invalid or has expired
+
+Forbidden:
+  description: "`FORBIDDEN`: the caller is an ACTIVE member but the role does not allow the action."
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/ErrorResponse"
+
+OrganizationNotFound:
+  description: |
+    `ORGANIZATION_NOT_FOUND`: the Organization does not exist or the caller has no ACTIVE
+    Membership in it. The two cases are indistinguishable by design (ADR-0006).
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/ErrorResponse"
+      example:
+        error:
+          code: ORGANIZATION_NOT_FOUND
+          message: Organization not found
+
+VersionConflict:
+  description: "`VERSION_CONFLICT`: `version` is stale. Re-read, then retry with `details.currentVersion`."
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/ErrorResponse"
+      example:
+        error:
+          code: VERSION_CONFLICT
+          message: The resource was modified by another request
+          details:
+            currentVersion: 3
+
+UnsupportedMediaType:
+  description: "`UNSUPPORTED_MEDIA_TYPE`: a body was sent without `Content-Type: application/json`."
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/ErrorResponse"
+
+RateLimited:
+  description: "`RATE_LIMIT_EXCEEDED`. Honor `Retry-After`."
+  headers:
+    Retry-After:
+      schema:
+        type: integer
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/ErrorResponse"
+
+InternalError:
+  description: "`INTERNAL_SERVER_ERROR`. Report the `X-Request-Id` response header."
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/ErrorResponse"
