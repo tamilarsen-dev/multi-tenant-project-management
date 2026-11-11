@@ -2,162 +2,81 @@ openapi: 3.1.0
 info:
   title: Project Management API
   version: 1.0.0
-  description: |
-    # Project Management API
+  description: >
+    Multi-tenant project management API. This document covers milestone M1
 
-    A RESTful API for building and managing collaborative workspaces
-    and project management workflows.
+    (identity and organizations); later endpoints are added by the slice that
+    ships them.
 
-    The API follows a multi-tenant architecture, allowing users to
-    create organizations and collaborate within isolated organizational
-    environments.
 
-    ## Core Capabilities
+    The normative rules live in the repository docs, which win on conflict:
 
-    The API is organized around the following functional domains:
+    `docs/design/api/conventions.md` (envelopes, pagination, OCC),
 
-    - **Authentication** — Register accounts, authenticate users,
-      manage sessions, and retrieve the current authenticated user.
-    - **Organizations** — Create and manage organizational workspaces.
-    - **Health Monitoring** — Check API availability and service health.
+    `docs/design/api/errors.md` (error catalog), and
+    `docs/design/api/contract.md`.
 
-    Additional capabilities, including memberships, invitations,
-    projects, and issues, are part of the planned platform scope
-    and will be documented as their endpoints become available.
 
-    ## Getting Started
+    ## Conventions
 
-    Follow these steps to start interacting with the API:
 
-    1. Explore the available endpoints in the API Reference.
-    2. Register an account using the registration endpoint.
-    3. Authenticate using the login endpoint.
-    4. Use the returned authentication token for protected endpoints.
-    5. Create an organization to establish your workspace.
+    - Base path `/api/v1`; JSON only. A body without `Content-Type:
+    application/json` → 415.
 
-    ## Authentication
+    - Request bodies reject unknown fields.
 
-    The API uses bearer token authentication for protected endpoints.
+    - Single resources: `{ "data": { ... } }`. Lists: `{ "data": [...],
+    "pagination": {...} }`.
 
-    Public endpoints, such as registration and login, do not require
-    authentication.
+    - Errors: `{ "error": { "code", "message", "details?" } }`. Branch on
+    `code`.
 
-    For protected endpoints, include the authentication token
-    in the `Authorization` header:
+    - Every response carries `X-Request-Id`; a well-formed client value is
+    reused.
 
-    ```http
-    Authorization: Bearer <your-token>
-    ```
+    - Protected endpoints take `Authorization: Bearer <accessToken>`; 401
+    responses
+      include `WWW-Authenticate: Bearer`.
+    - Mutable resources carry `version`; updates send it back (ADR-0007).
 
-    Authentication requirements are specified individually
-    for each endpoint.
-
-    ## Multi-Tenancy
-
-    Organizations act as isolated workspace boundaries.
-
-    Users can belong to organizations through memberships.
-    Organization-owned resources are scoped to their respective
-    organizations.
-
-    This model provides a foundation for collaboration and
-    organization-level access control.
-
-    ## API Conventions
-
-    - Base path: `/api/v1`
-    - Content type: `application/json`
-    - Authentication: Bearer token for protected endpoints
-    - Error responses: Standardized API error structure
-    - Resource naming: REST-oriented resource paths
-
-    ## API Versioning
-
-    Versioned endpoints use the `/api/v1` URL prefix.
-
-    The version prefix allows future API versions to evolve
-    independently while maintaining compatibility with existing
-    integrations.
-
-    ## Documentation Structure
-
-    - **Core API** — Health monitoring and authentication.
-    - **Organization Management** — Organization-related operations.
-    - **Schemas** — Reusable request, response, and data structures.
-
-    Use the navigation sidebar to explore endpoints and inspect
-    their parameters, request bodies, responses, and authentication
-    requirements.
+    - A resource in an Organization you are not an ACTIVE member of is reported
+    as
+      not found, never as forbidden (ADR-0006).
 servers:
   - url: http://localhost:3000
     description: Local development
+security:
+  - BearerAuth: []
 tags:
   - name: Health
-    description: |
-      Service health and availability monitoring.
+    description: Liveness and readiness probes. Public.
   - name: Authentication
-    description: |
-      User registration, login, session management,
-      and current user information.
+    description: Registration, login, and opaque Bearer sessions (ADR-0003).
   - name: Organizations
-    description: |
-      Organization workspace creation and management.
-x-tagGroups:
-  - name: Core API
-    tags:
-      - Health
-      - Authentication
-  - name: Organization Management
-    tags:
-      - Organizations
+    description: Tenant workspaces and the caller's Membership in them.
 paths:
   /healthz:
-    $ref: "#/x-ext/a110403/check"
+    $ref: "#/x-ext/a110403/liveness"
+  /readyz:
+    $ref: "#/x-ext/a110403/readiness"
   /api/v1/auth/register:
     $ref: "#/x-ext/dfb48ce/register"
   /api/v1/auth/login:
     $ref: "#/x-ext/dfb48ce/login"
-  /api/v1/auth/me:
-    $ref: "#/x-ext/dfb48ce/me"
+  /api/v1/auth/refresh:
+    $ref: "#/x-ext/dfb48ce/refresh"
   /api/v1/auth/logout:
     $ref: "#/x-ext/dfb48ce/logout"
+  /api/v1/auth/me:
+    $ref: "#/x-ext/dfb48ce/me"
   /api/v1/organizations:
-    $ref: "#/x-ext/9e1a49c/create"
+    $ref: "#/x-ext/9e1a49c/collection"
+  /api/v1/organizations/{organizationId}:
+    $ref: "#/x-ext/9e1a49c/item"
 components:
   securitySchemes:
     BearerAuth:
       $ref: "#/x-ext/4131fd1/BearerAuth"
-  schemas:
-    HealthResponse:
-      $ref: "#/x-ext/a189595/HealthResponse"
-    ErrorResponse:
-      $ref: "#/x-ext/146d2f2/ErrorResponse"
-    SuccessResponse:
-      $ref: "#/x-ext/415bd9d/SuccessResponse"
-    CollectionResponse:
-      $ref: "#/x-ext/415bd9d/CollectionResponse"
-    PaginationMeta:
-      $ref: "#/x-ext/1e71f76/PaginationMeta"
-    RegisterRequest:
-      $ref: "#/x-ext/f36ff03/RegisterRequest"
-    LoginRequest:
-      $ref: "#/x-ext/f36ff03/LoginRequest"
-    AuthUser:
-      $ref: "#/x-ext/f36ff03/AuthUser"
-    RegisteredUser:
-      $ref: "#/x-ext/f36ff03/RegisteredUser"
-    AuthSession:
-      $ref: ./components/schemas/auth.yaml#/AuthSession
-    RegisterResponse:
-      $ref: "#/x-ext/f36ff03/RegisterResponse"
-    LoginResponse:
-      $ref: "#/x-ext/f36ff03/LoginResponse"
-    CreateOrganizationRequest:
-      $ref: "#/x-ext/3cf926f/CreateOrganizationRequest"
-    Organization:
-      $ref: "#/x-ext/3cf926f/Organization"
-    CreateOrganizationResponse:
-      $ref: "#/x-ext/3cf926f/CreateOrganizationResponse"
 x-ext:
   a189595:
     HealthResponse:
@@ -174,113 +93,7 @@ x-ext:
               type: string
               enum:
                 - ok
-              example: ok
-  a110403:
-    check:
-      get:
-        tags:
-          - Health
-        summary: Check API health
-        description: |
-          Checks whether the API process is running and able
-          to respond to HTTP requests.
-        operationId: getHealth
-        responses:
-          "200":
-            description: API is healthy
-            content:
-              application/json:
-                schema:
-                  $ref: "#/x-ext/a189595/HealthResponse"
-                example:
-                  data:
-                    status: ok
-  f36ff03:
-    RegisterRequest:
-      type: object
-      description: |
-        Unknown properties are stripped by the server.
-      required:
-        - email
-        - password
-        - displayName
-      properties:
-        email:
-          type: string
-          format: email
-          maxLength: 255
-          description: |
-            User email address. The server trims whitespace
-            and normalizes the value to lowercase.
-          example: developer@example.com
-        password:
-          type: string
-          format: password
-          minLength: 12
-          maxLength: 128
-          description: |
-            Password must contain between 12 and 128 characters.
-            The server does not trim or normalize the password.
-          example: Correct-Horse-42!
-        displayName:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: User's display name. The server does not trim this value.
-          example: Alex Morgan
-    LoginRequest:
-      type: object
-      description: |
-        Unknown properties are stripped by the server.
-      required:
-        - email
-        - password
-      properties:
-        email:
-          type: string
-          format: email
-          maxLength: 255
-          description: |
-            User email address. The server trims whitespace
-            and normalizes the value to lowercase.
-          example: developer@example.com
-        password:
-          type: string
-          format: password
-          minLength: 1
-          maxLength: 128
-          description: Password is not trimmed or normalized.
-          example: Correct-Horse-42!
-    AuthUser:
-      type: object
-      required:
-        - id
-        - email
-        - displayName
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: 550e8400-e29b-41d4-a716-446655440000
-        email:
-          type: string
-          format: email
-          example: developer@example.com
-        displayName:
-          type: string
-          example: Alex Morgan
-    RegisteredUser:
-      allOf:
-        - $ref: "#/x-ext/f36ff03/AuthUser"
-        - type: object
-          required:
-            - createdAt
-          properties:
-            createdAt:
-              type: string
-              format: date-time
-              example: 2026-11-05T06:00:00.000Z
-    RegisterResponse:
+    UnavailableResponse:
       type: object
       required:
         - data
@@ -288,380 +101,713 @@ x-ext:
         data:
           type: object
           required:
-            - user
-            - sessionToken
+            - status
           properties:
-            user:
-              $ref: "#/x-ext/f36ff03/RegisteredUser"
-            sessionToken:
+            status:
               type: string
-              description: Opaque session token used for Bearer authentication.
-              example: opaque-session-token
-    LoginResponse:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          type: object
-          required:
-            - user
-            - sessionToken
-          properties:
-            user:
-              $ref: "#/x-ext/f36ff03/RegisteredUser"
-            sessionToken:
-              type: string
-              description: Opaque session token used for Bearer authentication.
-              example: opaque-session-token
+              enum:
+                - unavailable
   146d2f2:
     ErrorResponse:
       type: object
+      additionalProperties: false
       required:
         - error
       properties:
         error:
           type: object
+          additionalProperties: false
           required:
             - code
             - message
           properties:
             code:
-              type: string
-              description: Application-specific error code.
-              enum:
-                - INVALID_JSON
-                - VALIDATION_ERROR
-                - UNAUTHENTICATED
-                - FORBIDDEN
-                - NOT_FOUND
-                - CONFLICT
-                - PAYLOAD_TOO_LARGE
-                - INTERNAL_SERVER_ERROR
-                - RATE_LIMIT_EXCEEDED
+              $ref: "#/x-ext/146d2f2/ErrorCode"
             message:
               type: string
-              description: Human-readable error message.
+              description: Human-readable English message. Clients branch on `code`, never on
+                `message`.
             details:
-              type: object
-              description: |
-                Optional additional error information.
-                For validation errors, this contains an issues array
-                generated by Zod.
-              additionalProperties: true
+              description: Present only for codes whose catalog entry defines details.
+              oneOf:
+                - $ref: "#/x-ext/146d2f2/ValidationErrorDetails"
+                - $ref: "#/x-ext/146d2f2/VersionConflictDetails"
+    ErrorCode:
+      type: string
+      description: >
+        Stable machine-readable code. The full catalog is in
+        docs/design/api/errors.md;
+
+        this enum lists the codes the M1 endpoints can return.
+      enum:
+        - INVALID_JSON
+        - VALIDATION_ERROR
+        - ROUTE_NOT_FOUND
+        - PAYLOAD_TOO_LARGE
+        - UNSUPPORTED_MEDIA_TYPE
+        - RATE_LIMIT_EXCEEDED
+        - INTERNAL_SERVER_ERROR
+        - MISSING_AUTHENTICATION
+        - INVALID_SESSION
+        - INVALID_CREDENTIALS
+        - FORBIDDEN
+        - ORGANIZATION_NOT_FOUND
+        - EMAIL_ALREADY_EXISTS
+        - VERSION_CONFLICT
+    ValidationErrorDetails:
+      type: object
+      additionalProperties: false
+      required:
+        - fields
+      properties:
+        fields:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - path
+              - code
+              - message
+            properties:
+              path:
+                type: array
+                description: Body paths are unprefixed; params and query paths start with
+                  "params" / "query".
+                items:
+                  oneOf:
+                    - type: string
+                    - type: integer
+                example:
+                  - name
+              code:
+                type: string
+                example: too_small
+              message:
+                type: string
+    VersionConflictDetails:
+      type: object
+      additionalProperties: false
+      required:
+        - currentVersion
+      properties:
+        currentVersion:
+          type: integer
+          minimum: 1
+  5d7f27c:
+    ValidationError:
+      description: "`VALIDATION_ERROR` (with `details.fields`) or `INVALID_JSON`."
+      content:
+        application/json:
+          schema:
+            $ref: "#/x-ext/146d2f2/ErrorResponse"
+          example:
+            error:
+              code: VALIDATION_ERROR
+              message: Request validation failed
+              details:
+                fields:
+                  - path:
+                      - name
+                    code: too_small
+                    message: "Too small: expected string to have >=1 characters"
+    Unauthenticated:
+      description: "`MISSING_AUTHENTICATION` or `INVALID_SESSION` (unknown, expired,
+        or revoked token)."
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+            enum:
+              - Bearer
+      content:
+        application/json:
+          schema:
+            $ref: "#/x-ext/146d2f2/ErrorResponse"
+          example:
+            error:
+              code: INVALID_SESSION
+              message: The session is invalid or has expired
+    Forbidden:
+      description: "`FORBIDDEN`: the caller is an ACTIVE member but the role does not
+        allow the action."
+      content:
+        application/json:
+          schema:
+            $ref: "#/x-ext/146d2f2/ErrorResponse"
+    OrganizationNotFound:
+      description: >
+        `ORGANIZATION_NOT_FOUND`: the Organization does not exist or the caller
+        has no ACTIVE
+
+        Membership in it. The two cases are indistinguishable by design
+        (ADR-0006).
+      content:
+        application/json:
+          schema:
+            $ref: "#/x-ext/146d2f2/ErrorResponse"
+          example:
+            error:
+              code: ORGANIZATION_NOT_FOUND
+              message: Organization not found
+    VersionConflict:
+      description: "`VERSION_CONFLICT`: `version` is stale. Re-read, then retry with
+        `details.currentVersion`."
+      content:
+        application/json:
+          schema:
+            $ref: "#/x-ext/146d2f2/ErrorResponse"
+          example:
+            error:
+              code: VERSION_CONFLICT
+              message: The resource was modified by another request
+              details:
+                currentVersion: 3
+    UnsupportedMediaType:
+      description: "`UNSUPPORTED_MEDIA_TYPE`: a body was sent without `Content-Type:
+        application/json`."
+      content:
+        application/json:
+          schema:
+            $ref: "#/x-ext/146d2f2/ErrorResponse"
+    RateLimited:
+      description: "`RATE_LIMIT_EXCEEDED`. Honor `Retry-After`."
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: "#/x-ext/146d2f2/ErrorResponse"
+    InternalError:
+      description: "`INTERNAL_SERVER_ERROR`. Report the `X-Request-Id` response header."
+      content:
+        application/json:
+          schema:
+            $ref: "#/x-ext/146d2f2/ErrorResponse"
+  a110403:
+    liveness:
+      get:
+        tags:
+          - Health
+        summary: Liveness
+        description: The process is up. Never touches the database.
+        operationId: getLiveness
+        security: []
+        responses:
+          "200":
+            description: Alive.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/x-ext/a189595/HealthResponse"
+          "429":
+            $ref: "#/x-ext/5d7f27c/RateLimited"
+    readiness:
+      get:
+        tags:
+          - Health
+        summary: Readiness
+        description: The process can serve traffic (database reachable within its timeout).
+        operationId: getReadiness
+        security: []
+        responses:
+          "200":
+            description: Ready.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/x-ext/a189595/HealthResponse"
+          "429":
+            $ref: "#/x-ext/5d7f27c/RateLimited"
+          "503":
+            description: Not ready. The body never includes the underlying error.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/x-ext/a189595/UnavailableResponse"
+  f36ff03:
+    Email:
+      type: string
+      format: email
+      maxLength: 254
+      description: Trimmed and lowercased before validation and storage.
+      example: dana@example.com
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - password
+        - displayName
+      properties:
+        email:
+          $ref: "#/x-ext/f36ff03/Email"
+        password:
+          type: string
+          minLength: 12
+          maxLength: 128
+          description: Never trimmed or normalized.
+          example: correct horse battery
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Trimmed; must be non-empty afterwards.
+          example: Dana
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - password
+      properties:
+        email:
+          $ref: "#/x-ext/f36ff03/Email"
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Any non-empty value; a wrong or short password is
+            INVALID_CREDENTIALS, not a validation error.
+    User:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - email
+        - displayName
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    Session:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - accessToken
+        - tokenType
+        - expiresAt
+        - absoluteExpiresAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        accessToken:
+          type: string
+          description: Opaque bearer token, returned only here. The server stores only its
+            SHA-256 hash.
+        tokenType:
+          type: string
+          enum:
+            - Bearer
+        expiresAt:
+          type: string
+          format: date-time
+          description: Sliding expiry, at most 7 days after issue.
+        absoluteExpiresAt:
+          type: string
+          format: date-time
+          description: Hard limit 30 days after login; refresh never extends it.
+    AuthResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required:
+            - user
+            - session
+          properties:
+            user:
+              $ref: "#/x-ext/f36ff03/User"
+            session:
+              $ref: "#/x-ext/f36ff03/Session"
+    RefreshResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required:
+            - session
+          properties:
+            session:
+              $ref: "#/x-ext/f36ff03/Session"
+    MeResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required:
+            - user
+          properties:
+            user:
+              $ref: "#/x-ext/f36ff03/User"
   dfb48ce:
     register:
       post:
         tags:
           - Authentication
-        summary: Register a new user
-        description: |
-          Creates a user account and an authenticated session.
-
-          The email address is trimmed and normalized to lowercase.
-          Email addresses must be globally unique.
-
-          The password is not trimmed or normalized.
-          The display name is not trimmed or normalized.
-        operationId: registerUser
+        summary: Register
+        description: Creates a User and a first Session atomically.
+        operationId: register
+        security: []
         requestBody:
           required: true
           content:
             application/json:
               schema:
                 $ref: "#/x-ext/f36ff03/RegisterRequest"
-              example:
-                email: developer@example.com
-                password: Correct-Horse-42!
-                displayName: Alex Morgan
         responses:
           "201":
-            description: User registered successfully.
+            description: Registered and signed in.
             content:
               application/json:
                 schema:
-                  $ref: "#/x-ext/f36ff03/RegisterResponse"
-                example:
-                  data:
-                    user:
-                      id: 550e8400-e29b-41d4-a716-446655440000
-                      email: developer@example.com
-                      displayName: Alex Morgan
-                      createdAt: 2026-11-05T06:00:00.000Z
-                    sessionToken: opaque-session-token
+                  $ref: "#/x-ext/f36ff03/AuthResponse"
           "400":
-            description: Request validation failed.
-            content:
-              application/json:
-                schema:
-                  $ref: "#/x-ext/146d2f2/ErrorResponse"
-                example:
-                  error:
-                    code: VALIDATION_ERROR
-                    message: Request validation failed
-                    details:
-                      issues:
-                        - code: invalid_format
-                          format: email
-                          path:
-                            - email
-                          message: Invalid email address
+            $ref: "#/x-ext/5d7f27c/ValidationError"
           "409":
-            description: Email address is already registered.
+            description: "`EMAIL_ALREADY_EXISTS`."
             content:
               application/json:
                 schema:
                   $ref: "#/x-ext/146d2f2/ErrorResponse"
-                example:
-                  error:
-                    code: CONFLICT
-                    message: Email is already registered
+          "415":
+            $ref: "#/x-ext/5d7f27c/UnsupportedMediaType"
+          "429":
+            $ref: "#/x-ext/5d7f27c/RateLimited"
           "500":
-            description: Unexpected server error.
-            content:
-              application/json:
-                schema:
-                  $ref: "#/x-ext/146d2f2/ErrorResponse"
-                example:
-                  error:
-                    code: INTERNAL_SERVER_ERROR
-                    message: An unexpected error occurred
+            $ref: "#/x-ext/5d7f27c/InternalError"
     login:
       post:
         tags:
           - Authentication
-        summary: Authenticate a user
-        description: |
-          Authenticates a user using email and password.
+        summary: Log in
+        description: >
+          Issues a new Session. An unknown email and a wrong password return the
+          same
 
-          Successful authentication creates a new session.
-          Multiple concurrent sessions are supported.
-
-          Invalid email or password produces the same error response
-          to avoid revealing whether an account exists.
-
-          The email address is trimmed and normalized to lowercase.
-          The password is not trimmed or normalized.
-        operationId: loginUser
+          `INVALID_CREDENTIALS` response with comparable timing.
+        operationId: login
+        security: []
         requestBody:
           required: true
           content:
             application/json:
               schema:
                 $ref: "#/x-ext/f36ff03/LoginRequest"
-              example:
-                email: developer@example.com
-                password: Correct-Horse-42!
         responses:
           "200":
-            description: User authenticated successfully.
+            description: Signed in.
             content:
               application/json:
                 schema:
-                  $ref: "#/x-ext/f36ff03/LoginResponse"
-                example:
-                  data:
-                    user:
-                      id: 550e8400-e29b-41d4-a716-446655440000
-                      email: developer@example.com
-                      displayName: Alex Morgan
-                      createdAt: 2026-11-05T06:00:00.000Z
-                    sessionToken: opaque-session-token
+                  $ref: "#/x-ext/f36ff03/AuthResponse"
           "400":
-            description: Request validation failed.
-            content:
-              application/json:
-                schema:
-                  $ref: "#/x-ext/146d2f2/ErrorResponse"
-                example:
-                  error:
-                    code: VALIDATION_ERROR
-                    message: Request validation failed
-                    details:
-                      issues:
-                        - code: invalid_format
-                          format: email
-                          path:
-                            - email
-                          message: Invalid email address
+            $ref: "#/x-ext/5d7f27c/ValidationError"
           "401":
-            description: Invalid email or password.
+            description: "`INVALID_CREDENTIALS`."
+            headers:
+              WWW-Authenticate:
+                schema:
+                  type: string
+                  enum:
+                    - Bearer
             content:
               application/json:
                 schema:
                   $ref: "#/x-ext/146d2f2/ErrorResponse"
-                example:
-                  error:
-                    code: UNAUTHENTICATED
-                    message: Invalid email or password
+          "415":
+            $ref: "#/x-ext/5d7f27c/UnsupportedMediaType"
+          "429":
+            $ref: "#/x-ext/5d7f27c/RateLimited"
           "500":
-            description: Unexpected server error.
+            $ref: "#/x-ext/5d7f27c/InternalError"
+    refresh:
+      post:
+        tags:
+          - Authentication
+        summary: Rotate the session
+        description: >
+          Atomically revokes the presented Session and issues a new one. The new
+          `expiresAt`
+
+          is `min(now + 7 days, absoluteExpiresAt)`; `absoluteExpiresAt` is
+          inherited.
+
+          Of concurrent refreshes with the same token exactly one succeeds. A
+          revoked
+
+          token is always `INVALID_SESSION`.
+        operationId: refreshSession
+        security:
+          - BearerAuth: []
+        responses:
+          "200":
+            description: New session. The old token no longer works.
             content:
               application/json:
                 schema:
-                  $ref: "#/x-ext/146d2f2/ErrorResponse"
-                example:
-                  error:
-                    code: INTERNAL_SERVER_ERROR
-                    message: An unexpected error occurred
+                  $ref: "#/x-ext/f36ff03/RefreshResponse"
+          "401":
+            $ref: "#/x-ext/5d7f27c/Unauthenticated"
+          "429":
+            $ref: "#/x-ext/5d7f27c/RateLimited"
+          "500":
+            $ref: "#/x-ext/5d7f27c/InternalError"
+    logout:
+      post:
+        tags:
+          - Authentication
+        summary: Log out
+        description: Revokes the current Session.
+        operationId: logout
+        security:
+          - BearerAuth: []
+        responses:
+          "204":
+            description: Revoked.
+          "401":
+            $ref: "#/x-ext/5d7f27c/Unauthenticated"
+          "500":
+            $ref: "#/x-ext/5d7f27c/InternalError"
     me:
       get:
         tags:
           - Authentication
-        summary: Get current user
-        description: |
-          Returns the authenticated user's information.
-
-          Requires a valid Bearer session token.
+        summary: Current user
         operationId: getCurrentUser
         security:
           - BearerAuth: []
         responses:
           "200":
-            description: Current user retrieved successfully.
+            description: The authenticated User.
             content:
               application/json:
                 schema:
-                  type: object
-                  required:
-                    - data
-                  properties:
-                    data:
-                      type: object
-                      required:
-                        - user
-                      properties:
-                        user:
-                          $ref: "#/x-ext/f36ff03/AuthUser"
-                example:
-                  data:
-                    user:
-                      id: 550e8400-e29b-41d4-a716-446655440000
-                      email: developer@example.com
-                      displayName: Alex Morgan
+                  $ref: "#/x-ext/f36ff03/MeResponse"
           "401":
-            description: Authentication is missing, invalid, expired, or revoked.
-            content:
-              application/json:
-                schema:
-                  $ref: "#/x-ext/146d2f2/ErrorResponse"
-                example:
-                  error:
-                    code: UNAUTHENTICATED
-                    message: Authentication is required
+            $ref: "#/x-ext/5d7f27c/Unauthenticated"
           "500":
-            description: Unexpected server error.
-            content:
-              application/json:
-                schema:
-                  $ref: "#/x-ext/146d2f2/ErrorResponse"
-                example:
-                  error:
-                    code: INTERNAL_SERVER_ERROR
-                    message: An unexpected error occurred
-    logout:
-      post:
-        tags:
-          - Authentication
-        summary: Log out current session
-        description: |
-          Revokes the session associated with the supplied Bearer token.
-          The revoked session can no longer authenticate requests.
-        operationId: logoutCurrentSession
-        security:
-          - BearerAuth: []
-        responses:
-          "204":
-            description: Session revoked successfully. No response body is returned.
-          "401":
-            description: Authentication is missing, invalid, expired, or revoked.
-            content:
-              application/json:
-                schema:
-                  $ref: "#/x-ext/146d2f2/ErrorResponse"
-                example:
-                  error:
-                    code: UNAUTHENTICATED
-                    message: Authentication is required
-          "500":
-            description: Unexpected server error.
-            content:
-              application/json:
-                schema:
-                  $ref: "#/x-ext/146d2f2/ErrorResponse"
-                example:
-                  error:
-                    code: INTERNAL_SERVER_ERROR
-                    message: An unexpected error occurred
+            $ref: "#/x-ext/5d7f27c/InternalError"
   3cf926f:
+    OrganizationName:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: Trimmed; must be non-empty afterwards. Not unique.
+      example: Acme Engineering
+    Version:
+      type: integer
+      minimum: 1
+      description: Optimistic-concurrency token (ADR-0007). Send the version you last read.
     CreateOrganizationRequest:
       type: object
-      description: |
-        Unknown properties are stripped by the server.
+      additionalProperties: false
       required:
         - name
       properties:
         name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: |
-            Organization name. The server trims leading and trailing
-            whitespace before validation and storage.
-            The resulting name must contain between 1 and 100 characters.
-          example: Acme Corporation
+          $ref: "#/x-ext/3cf926f/OrganizationName"
+    UpdateOrganizationRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - version
+      properties:
+        name:
+          $ref: "#/x-ext/3cf926f/OrganizationName"
+        version:
+          $ref: "#/x-ext/3cf926f/Version"
     Organization:
       type: object
+      additionalProperties: false
       required:
         - id
         - name
+        - version
         - createdAt
         - updatedAt
       properties:
         id:
           type: string
           format: uuid
-          example: 550e8400-e29b-41d4-a716-446655440000
         name:
           type: string
-          example: Acme Corporation
+        version:
+          $ref: "#/x-ext/3cf926f/Version"
         createdAt:
           type: string
           format: date-time
-          example: 2026-11-06T06:00:00.000Z
         updatedAt:
           type: string
           format: date-time
-          example: 2026-11-06T06:00:00.000Z
-    CreateOrganizationResponse:
+    OrganizationRole:
+      type: string
+      enum:
+        - OWNER
+        - ADMIN
+        - MEMBER
+    MembershipStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - REMOVED
+    Membership:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - organizationId
+        - user
+        - role
+        - status
+        - version
+        - joinedAt
+        - removedAt
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        user:
+          type: object
+          additionalProperties: false
+          required:
+            - id
+            - email
+            - displayName
+          properties:
+            id:
+              type: string
+              format: uuid
+            email:
+              type: string
+              format: email
+            displayName:
+              type: string
+        role:
+          $ref: "#/x-ext/3cf926f/OrganizationRole"
+        status:
+          $ref: "#/x-ext/3cf926f/MembershipStatus"
+        version:
+          $ref: "#/x-ext/3cf926f/Version"
+        joinedAt:
+          type: string
+          format: date-time
+        removedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    OrganizationWithMembership:
+      type: object
+      additionalProperties: false
+      required:
+        - organization
+        - membership
+      description: The Organization and the caller's own Membership in it.
+      properties:
+        organization:
+          $ref: "#/x-ext/3cf926f/Organization"
+        membership:
+          $ref: "#/x-ext/3cf926f/Membership"
+    OrganizationResponse:
       type: object
       required:
         - data
       properties:
         data:
-          type: object
-          required:
-            - organization
-          properties:
-            organization:
-              $ref: "#/x-ext/3cf926f/Organization"
+          $ref: "#/x-ext/3cf926f/OrganizationWithMembership"
+    OrganizationListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/x-ext/3cf926f/OrganizationWithMembership"
+        pagination:
+          $ref: "#/x-ext/1e71f76/Pagination"
+  1e71f76:
+    Pagination:
+      type: object
+      additionalProperties: false
+      required:
+        - nextCursor
+        - hasMore
+        - totalCount
+      properties:
+        nextCursor:
+          type:
+            - string
+            - "null"
+          description: Opaque. Pass back unchanged as `cursor`; `null` on the last page.
+        hasMore:
+          type: boolean
+        totalCount:
+          type: integer
+          minimum: 0
+          description: Matching items across all pages, under the same filters.
+  2fcb753:
+    limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    cursor:
+      name: cursor
+      in: query
+      description: "`pagination.nextCursor` from the previous page. Unknown or
+        malformed → `VALIDATION_ERROR`."
+      schema:
+        type: string
+        maxLength: 512
   9e1a49c:
-    create:
+    collection:
       post:
         tags:
           - Organizations
-        summary: Create an organization
+        summary: Create an Organization
         description: |
-          Creates a new organization.
-
-          The authenticated user is automatically assigned the OWNER role
-          in the newly created organization.
-
-          Organization creation and owner membership assignment are
-          performed atomically within a database transaction.
-
-          Leading and trailing whitespace in the organization name
-          is trimmed before validation and storage.
+          Creates the Organization, the caller's ACTIVE OWNER Membership, and an
+          `ORGANIZATION_CREATED` Activity in one transaction.
         operationId: createOrganization
         security:
           - BearerAuth: []
@@ -671,61 +817,124 @@ x-ext:
             application/json:
               schema:
                 $ref: "#/x-ext/3cf926f/CreateOrganizationRequest"
-              example:
-                name: Acme Corporation
         responses:
           "201":
-            description: Organization created successfully.
+            description: Created.
+            headers:
+              Location:
+                schema:
+                  type: string
+                  example: /api/v1/organizations/0b6f6c1e-8d2a-4f7e-9b2f-3a4c5d6e7f80
             content:
               application/json:
                 schema:
-                  $ref: "#/x-ext/3cf926f/CreateOrganizationResponse"
-                example:
-                  data:
-                    organization:
-                      id: 550e8400-e29b-41d4-a716-446655440000
-                      name: Acme Corporation
-                      createdAt: 2026-11-06T06:00:00.000Z
-                      updatedAt: 2026-11-06T06:00:00.000Z
+                  $ref: "#/x-ext/3cf926f/OrganizationResponse"
           "400":
-            description: Request validation failed.
-            content:
-              application/json:
-                schema:
-                  $ref: "#/x-ext/146d2f2/ErrorResponse"
-                example:
-                  error:
-                    code: VALIDATION_ERROR
-                    message: Request validation failed
-                    details:
-                      issues:
-                        - code: too_small
-                          origin: string
-                          minimum: 1
-                          inclusive: true
-                          path:
-                            - name
-                          message: "Too small: expected string to have >=1 characters"
+            $ref: "#/x-ext/5d7f27c/ValidationError"
           "401":
-            description: Authentication is missing, invalid, expired, or revoked.
-            content:
-              application/json:
-                schema:
-                  $ref: "#/x-ext/146d2f2/ErrorResponse"
-                example:
-                  error:
-                    code: UNAUTHENTICATED
-                    message: Authentication is required
+            $ref: "#/x-ext/5d7f27c/Unauthenticated"
+          "415":
+            $ref: "#/x-ext/5d7f27c/UnsupportedMediaType"
           "500":
-            description: Unexpected server error.
+            $ref: "#/x-ext/5d7f27c/InternalError"
+      get:
+        tags:
+          - Organizations
+        summary: List my Organizations
+        description: Organizations where the caller has an ACTIVE Membership, newest first.
+        operationId: listOrganizations
+        security:
+          - BearerAuth: []
+        parameters:
+          - $ref: "#/x-ext/2fcb753/limit"
+          - $ref: "#/x-ext/2fcb753/cursor"
+        responses:
+          "200":
+            description: One page.
             content:
               application/json:
                 schema:
-                  $ref: "#/x-ext/146d2f2/ErrorResponse"
-                example:
-                  error:
-                    code: INTERNAL_SERVER_ERROR
-                    message: An unexpected error occurred
+                  $ref: "#/x-ext/3cf926f/OrganizationListResponse"
+          "400":
+            $ref: "#/x-ext/5d7f27c/ValidationError"
+          "401":
+            $ref: "#/x-ext/5d7f27c/Unauthenticated"
+          "500":
+            $ref: "#/x-ext/5d7f27c/InternalError"
+    item:
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      get:
+        tags:
+          - Organizations
+        summary: Get an Organization
+        operationId: getOrganization
+        security:
+          - BearerAuth: []
+        responses:
+          "200":
+            description: The Organization and the caller's Membership.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/x-ext/3cf926f/OrganizationResponse"
+          "400":
+            $ref: "#/x-ext/5d7f27c/ValidationError"
+          "401":
+            $ref: "#/x-ext/5d7f27c/Unauthenticated"
+          "404":
+            $ref: "#/x-ext/5d7f27c/OrganizationNotFound"
+          "500":
+            $ref: "#/x-ext/5d7f27c/InternalError"
+      patch:
+        tags:
+          - Organizations
+        summary: Rename an Organization
+        description: >
+          OWNER or ADMIN only. A name equal to the current one (after trimming)
+          is a no-op:
+
+          200 with the unchanged resource and no Activity, checked before
+          `version`.
+
+          Otherwise the version must match; the update increments it and records
+
+          `ORGANIZATION_UPDATED` in the same transaction.
+        operationId: updateOrganization
+        security:
+          - BearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/x-ext/3cf926f/UpdateOrganizationRequest"
+        responses:
+          "200":
+            description: Updated, or unchanged on a no-op.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/x-ext/3cf926f/OrganizationResponse"
+          "400":
+            $ref: "#/x-ext/5d7f27c/ValidationError"
+          "401":
+            $ref: "#/x-ext/5d7f27c/Unauthenticated"
+          "403":
+            $ref: "#/x-ext/5d7f27c/Forbidden"
+          "404":
+            $ref: "#/x-ext/5d7f27c/OrganizationNotFound"
+          "409":
+            $ref: "#/x-ext/5d7f27c/VersionConflict"
+          "415":
+            $ref: "#/x-ext/5d7f27c/UnsupportedMediaType"
+          "500":
+            $ref: "#/x-ext/5d7f27c/InternalError"
   4131fd1:
     BearerAuth:
       type: http
@@ -737,44 +946,3 @@ x-ext:
         Include the token in the Authorization header:
 
         Authorization: Bearer <session_token>
-  1e71f76:
-    PaginationMeta:
-      type: object
-      required:
-        - nextCursor
-        - hasMore
-      properties:
-        nextCursor:
-          type:
-            - string
-            - "null"
-          description: Cursor for retrieving the next page.
-          example: null
-        hasMore:
-          type: boolean
-          description: Indicates whether more records are available.
-          example: false
-  415bd9d:
-    SuccessResponse:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          description: Response payload.
-          type: object
-          additionalProperties: true
-    CollectionResponse:
-      type: object
-      required:
-        - data
-        - meta
-      properties:
-        data:
-          type: array
-          description: Collection of resources.
-          items:
-            type: object
-            additionalProperties: true
-        meta:
-          $ref: "#/x-ext/1e71f76/PaginationMeta"

@@ -1,130 +1,118 @@
+# DTOs: docs/design/api/contract.md §2.1–2.2. Request bodies reject unknown fields.
+Email:
+  type: string
+  format: email
+  maxLength: 254
+  description: Trimmed and lowercased before validation and storage.
+  example: dana@example.com
+
 RegisterRequest:
   type: object
-  description: |
-    Unknown properties are stripped by the server.
-  required:
-    - email
-    - password
-    - displayName
+  additionalProperties: false
+  required: [email, password, displayName]
   properties:
     email:
-      type: string
-      format: email
-      maxLength: 255
-      description: |
-        User email address. The server trims whitespace
-        and normalizes the value to lowercase.
-      example: developer@example.com
-
+      $ref: "#/Email"
     password:
       type: string
-      format: password
       minLength: 12
       maxLength: 128
-      description: |
-        Password must contain between 12 and 128 characters.
-        The server does not trim or normalize the password.
-      example: "Correct-Horse-42!"
-
+      description: Never trimmed or normalized.
+      example: correct horse battery
     displayName:
       type: string
       minLength: 1
       maxLength: 100
-      description: User's display name. The server does not trim this value.
-      example: Alex Morgan
+      description: Trimmed; must be non-empty afterwards.
+      example: Dana
 
 LoginRequest:
   type: object
-  description: |
-    Unknown properties are stripped by the server.
-  required:
-    - email
-    - password
+  additionalProperties: false
+  required: [email, password]
   properties:
     email:
-      type: string
-      format: email
-      maxLength: 255
-      description: |
-        User email address. The server trims whitespace
-        and normalizes the value to lowercase.
-      example: developer@example.com
-
+      $ref: "#/Email"
     password:
       type: string
-      format: password
       minLength: 1
       maxLength: 128
-      description: Password is not trimmed or normalized.
-      example: "Correct-Horse-42!"
+      description: Any non-empty value; a wrong or short password is INVALID_CREDENTIALS, not a validation error.
 
-AuthUser:
+User:
   type: object
-  required:
-    - id
-    - email
-    - displayName
+  additionalProperties: false
+  required: [id, email, displayName, createdAt]
   properties:
     id:
       type: string
       format: uuid
-      example: 550e8400-e29b-41d4-a716-446655440000
-
     email:
       type: string
       format: email
-      example: developer@example.com
-
     displayName:
       type: string
-      example: Alex Morgan
+    createdAt:
+      type: string
+      format: date-time
 
-RegisteredUser:
-  allOf:
-    - $ref: "#/AuthUser"
-    - type: object
-      required:
-        - createdAt
-      properties:
-        createdAt:
-          type: string
-          format: date-time
-          example: "2026-11-05T06:00:00.000Z"
-
-RegisterResponse:
+Session:
   type: object
-  required:
-    - data
+  additionalProperties: false
+  required: [id, accessToken, tokenType, expiresAt, absoluteExpiresAt]
+  properties:
+    id:
+      type: string
+      format: uuid
+    accessToken:
+      type: string
+      description: Opaque bearer token, returned only here. The server stores only its SHA-256 hash.
+    tokenType:
+      type: string
+      enum: [Bearer]
+    expiresAt:
+      type: string
+      format: date-time
+      description: Sliding expiry, at most 7 days after issue.
+    absoluteExpiresAt:
+      type: string
+      format: date-time
+      description: Hard limit 30 days after login; refresh never extends it.
+
+AuthResponse:
+  type: object
+  required: [data]
   properties:
     data:
       type: object
-      required:
-        - user
-        - sessionToken
+      additionalProperties: false
+      required: [user, session]
       properties:
         user:
-          $ref: "#/RegisteredUser"
+          $ref: "#/User"
+        session:
+          $ref: "#/Session"
 
-        sessionToken:
-          type: string
-          description: Opaque session token used for Bearer authentication.
-          example: "opaque-session-token"
-
-LoginResponse:
+RefreshResponse:
   type: object
-  required:
-    - data
+  required: [data]
   properties:
     data:
       type: object
-      required:
-        - user
-        - sessionToken
+      additionalProperties: false
+      required: [session]
+      properties:
+        session:
+          $ref: "#/Session"
+
+MeResponse:
+  type: object
+  required: [data]
+  properties:
+    data:
+      type: object
+      additionalProperties: false
+      required: [user]
       properties:
         user:
-          $ref: "#/RegisteredUser"
-
-        sessionToken:
-          type: string
-          description: Opaque session token used for Bearer authentication.
-          example: "opaque-session-token"
+          $ref: "#/User"

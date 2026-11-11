@@ -4,186 +4,62 @@ info:
   title: Project Management API
   version: 1.0.0
   description: |
-    # Project Management API
+    Multi-tenant project management API. This document covers milestone M1
+    (identity and organizations); later endpoints are added by the slice that ships them.
 
-    A RESTful API for building and managing collaborative workspaces
-    and project management workflows.
+    The normative rules live in the repository docs, which win on conflict:
+    `docs/design/api/conventions.md` (envelopes, pagination, OCC),
+    `docs/design/api/errors.md` (error catalog), and `docs/design/api/contract.md`.
 
-    The API follows a multi-tenant architecture, allowing users to
-    create organizations and collaborate within isolated organizational
-    environments.
+    ## Conventions
 
-    ## Core Capabilities
-
-    The API is organized around the following functional domains:
-
-    - **Authentication** — Register accounts, authenticate users,
-      manage sessions, and retrieve the current authenticated user.
-    - **Organizations** — Create and manage organizational workspaces.
-    - **Health Monitoring** — Check API availability and service health.
-
-    Additional capabilities, including memberships, invitations,
-    projects, and issues, are part of the planned platform scope
-    and will be documented as their endpoints become available.
-
-    ## Getting Started
-
-    Follow these steps to start interacting with the API:
-
-    1. Explore the available endpoints in the API Reference.
-    2. Register an account using the registration endpoint.
-    3. Authenticate using the login endpoint.
-    4. Use the returned authentication token for protected endpoints.
-    5. Create an organization to establish your workspace.
-
-    ## Authentication
-
-    The API uses bearer token authentication for protected endpoints.
-
-    Public endpoints, such as registration and login, do not require
-    authentication.
-
-    For protected endpoints, include the authentication token
-    in the `Authorization` header:
-
-    ```http
-    Authorization: Bearer <your-token>
-    ```
-
-    Authentication requirements are specified individually
-    for each endpoint.
-
-    ## Multi-Tenancy
-
-    Organizations act as isolated workspace boundaries.
-
-    Users can belong to organizations through memberships.
-    Organization-owned resources are scoped to their respective
-    organizations.
-
-    This model provides a foundation for collaboration and
-    organization-level access control.
-
-    ## API Conventions
-
-    - Base path: `/api/v1`
-    - Content type: `application/json`
-    - Authentication: Bearer token for protected endpoints
-    - Error responses: Standardized API error structure
-    - Resource naming: REST-oriented resource paths
-
-    ## API Versioning
-
-    Versioned endpoints use the `/api/v1` URL prefix.
-
-    The version prefix allows future API versions to evolve
-    independently while maintaining compatibility with existing
-    integrations.
-
-    ## Documentation Structure
-
-    - **Core API** — Health monitoring and authentication.
-    - **Organization Management** — Organization-related operations.
-    - **Schemas** — Reusable request, response, and data structures.
-
-    Use the navigation sidebar to explore endpoints and inspect
-    their parameters, request bodies, responses, and authentication
-    requirements.
+    - Base path `/api/v1`; JSON only. A body without `Content-Type: application/json` → 415.
+    - Request bodies reject unknown fields.
+    - Single resources: `{ "data": { ... } }`. Lists: `{ "data": [...], "pagination": {...} }`.
+    - Errors: `{ "error": { "code", "message", "details?" } }`. Branch on `code`.
+    - Every response carries `X-Request-Id`; a well-formed client value is reused.
+    - Protected endpoints take `Authorization: Bearer <accessToken>`; 401 responses
+      include `WWW-Authenticate: Bearer`.
+    - Mutable resources carry `version`; updates send it back (ADR-0007).
+    - A resource in an Organization you are not an ACTIVE member of is reported as
+      not found, never as forbidden (ADR-0006).
 
 servers:
   - url: http://localhost:3000
     description: Local development
 
+security:
+  - BearerAuth: []
+
 tags:
   - name: Health
-    description: |
-      Service health and availability monitoring.
-
+    description: Liveness and readiness probes. Public.
   - name: Authentication
-    description: |
-      User registration, login, session management,
-      and current user information.
-
+    description: Registration, login, and opaque Bearer sessions (ADR-0003).
   - name: Organizations
-    description: |
-      Organization workspace creation and management.
-
-x-tagGroups:
-  - name: Core API
-    tags:
-      - Health
-      - Authentication
-
-  - name: Organization Management
-    tags:
-      - Organizations
+    description: Tenant workspaces and the caller's Membership in them.
 
 paths:
   /healthz:
-    $ref: "./paths/health.yaml#/check"
-
+    $ref: "./paths/health.yaml#/liveness"
+  /readyz:
+    $ref: "./paths/health.yaml#/readiness"
   /api/v1/auth/register:
     $ref: "./paths/auth.yaml#/register"
-
   /api/v1/auth/login:
     $ref: "./paths/auth.yaml#/login"
-
-  /api/v1/auth/me:
-    $ref: "./paths/auth.yaml#/me"
-
+  /api/v1/auth/refresh:
+    $ref: "./paths/auth.yaml#/refresh"
   /api/v1/auth/logout:
     $ref: "./paths/auth.yaml#/logout"
-
+  /api/v1/auth/me:
+    $ref: "./paths/auth.yaml#/me"
   /api/v1/organizations:
-    $ref: "./paths/organizations.yaml#/create"
+    $ref: "./paths/organizations.yaml#/collection"
+  /api/v1/organizations/{organizationId}:
+    $ref: "./paths/organizations.yaml#/item"
 
 components:
   securitySchemes:
     BearerAuth:
       $ref: "./components/security-schemes.yaml#/BearerAuth"
-
-  schemas:
-    HealthResponse:
-      $ref: "./components/schemas/health.yaml#/HealthResponse"
-
-    ErrorResponse:
-      $ref: "./components/schemas/error.yaml#/ErrorResponse"
-
-    SuccessResponse:
-      $ref: "./components/schemas/success.yaml#/SuccessResponse"
-
-    CollectionResponse:
-      $ref: "./components/schemas/success.yaml#/CollectionResponse"
-
-    PaginationMeta:
-      $ref: "./components/schemas/pagination.yaml#/PaginationMeta"
-
-    RegisterRequest:
-      $ref: "./components/schemas/auth.yaml#/RegisterRequest"
-
-    LoginRequest:
-      $ref: "./components/schemas/auth.yaml#/LoginRequest"
-
-    AuthUser:
-      $ref: "./components/schemas/auth.yaml#/AuthUser"
-
-    RegisteredUser:
-      $ref: "./components/schemas/auth.yaml#/RegisteredUser"
-
-    AuthSession:
-      $ref: "./components/schemas/auth.yaml#/AuthSession"
-
-    RegisterResponse:
-      $ref: "./components/schemas/auth.yaml#/RegisterResponse"
-
-    LoginResponse:
-      $ref: "./components/schemas/auth.yaml#/LoginResponse"
-
-    CreateOrganizationRequest:
-      $ref: "./components/schemas/organizations.yaml#/CreateOrganizationRequest"
-
-    Organization:
-      $ref: "./components/schemas/organizations.yaml#/Organization"
-
-    CreateOrganizationResponse:
-      $ref: "./components/schemas/organizations.yaml#/CreateOrganizationResponse"
