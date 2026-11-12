@@ -40,11 +40,17 @@ cp .env.example .env              # set POSTGRES_PASSWORD
 docker compose up -d db
 
 # API configuration
-cp apps/api/.env.example apps/api/.env   # set DATABASE_URL and CORS_ORIGINS
+cp apps/api/.env.example apps/api/.env   # set DATABASE_URL, CORS_ORIGINS, TRUST_PROXY=loopback
 pnpm --filter api prisma migrate deploy
 
+# Web configuration (server-only; the browser never calls the API directly)
+cp apps/web/.env.example apps/web/.env.local
+
 pnpm dev:api                      # http://localhost:3000, docs at /docs
+pnpm dev:web                      # http://localhost:3001
 ```
+
+After changing the API contract, regenerate the bundle and the web types: `pnpm --filter api docs:bundle && pnpm --filter web api:types`. CI fails if either is stale.
 
 Tests use a separate database named `project_management_test`, configured in `apps/api/.env.test`; the suite refuses to run against any other database.
 

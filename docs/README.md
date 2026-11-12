@@ -77,6 +77,14 @@ When two documents disagree, the owner wins and the other is corrected in the sa
 
 ## Change log
 
+### 2026-11-12 — M1 web client
+
+- ADR-0010 amended: server actions instead of auth route handlers; proactive refresh replaces refresh-after-401; client IP forwarding.
+- Security §4: BFF and `TRUST_PROXY`; known `X-Forwarded-For` gap until M6.
+- Architecture §4.1: `apps/web` layout and rules; generated API types.
+- Design system v0.3: `mark-tint` role, workspace screens and states (Proposed), next-intl and self-hosted fonts (Decided).
+- Roadmap: tasks 1.12–1.14.
+
 ### 2026-11-11 — M1 implementation
 
 - Database: `memberships_user_status_idx` replaces the partial active-user index; session cleanup partial indexes deferred to the cleanup job.

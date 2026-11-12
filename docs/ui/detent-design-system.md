@@ -1,6 +1,6 @@
 # Detent Design System
 
-Version 0.2 · working draft · November 9, 2026 · owner: project author
+Version 0.3 · working draft · November 12, 2026 · owner: project author
 
 ## 1. Purpose and how to use this document
 
@@ -8,7 +8,7 @@ This is the single reference for how Detent looks, sounds and moves. Design and 
 
 Status tags used throughout: **Decided** (chosen by the owner), **Proposed** (a default suggested during design work, not yet reviewed), **Open** (not decided yet).
 
-Change log: v0.2 (November 9, 2026): the owner accepted every item that was Proposed in v0.1, so they are now Decided. Numeric values (motion timings, type scale, sizes) stay open to tuning during implementation. The auth screen direction was added (section 10) and the old side-panel auth layout was removed.
+Change log: v0.3 (November 12, 2026): first implementation in `apps/web`. New role `mark-tint` and the workspace screens, empty, loading and error states are Proposed (section 10); translation library and font loading decided (section 12). v0.2 (November 9, 2026): the owner accepted every item that was Proposed in v0.1, so they are now Decided. Numeric values (motion timings, type scale, sizes) stay open to tuning during implementation. The auth screen direction was added (section 10) and the old side-panel auth layout was removed.
 
 ## 2. Brand foundation
 
@@ -141,6 +141,7 @@ Accent is a medium violet leaning toward orchid: not dark, not neon. Neutrals ca
 | accent-soft (background) | #ECE2FF | #371B5B |
 | accent-ink (text on soft) | #562C8B | #D9C6FE |
 | on-accent (text on accent) | #FFFFFF | #0B0A10 |
+| mark-tint (decorative mark, Proposed) | #EFECF9 | #1B1A21 |
 
 **Task status colors.** Status is always shown with a word, never by color alone.
 
@@ -227,6 +228,18 @@ Every interactive component must define these states before it is built: default
 - A large tone-on-tone mark sits cropped in a corner as decoration only (hidden from assistive technology). Its peg starts slightly retracted and clicks fully into the notch while any field has focus. This uses the CSS `:has()` selector, so verify browser support for the target audience, and provide a static fallback.
 - With reduced motion, all of these transitions are disabled.
 - Sign in autocomplete values: email, current-password. Create account: name, email, new-password, with the 12 character rule shown under the password field.
+- Implemented in both themes; the light version reuses the same roles (Proposed). Below 768 px the decorative mark and tagline are hidden (Proposed).
+
+**Workspace screens (Proposed, v0.3).** Built from existing tokens during M1; review before they become Decided.
+
+- App shell: surface header with the logo (links to workspaces), theme select, the signed-in name, and sign out; content column up to 1024 px; a skip link to the main content.
+- Workspace list: H1 with a count, primary "Create workspace" on the right, cards (surface, border, radius 14, elevation 1) with name, role pill and created date, three columns from 1024 px; "Show more" loads the next page.
+- Create workspace: a single field on its own page; the new workspace opens after creation.
+- Workspace page: name, role pill, member-since date, a secondary "Settings" link for owners and admins only.
+- Settings: a "General" panel with the name field. Members see the rule instead of the form. A version conflict keeps the user on the form, loads the latest name, and explains why.
+- Empty state: two outline tiles joined by an accent peg, a title, one sentence, and at most one action.
+- Loading: skeleton blocks in surface-sunken with a slow pulse, disabled with reduced motion.
+- Errors: page errors say what happened and offer "Try again"; not found and no access look identical, matching the API.
 
 ## 11. Accessibility
 
@@ -280,7 +293,9 @@ Tokens live in code as CSS variables: roles change per theme, Tailwind reads the
 - **Theme switching:** follow the system setting by default, with a manual override stored per user.
 - **Fonts:** load through the framework's font optimization, not a manual stylesheet link.
 - **Mobile (Flutter):** build the color scheme from the same hex values and share the motion constants. A single tokens file that generates both outputs is Open.
-- **Translations:** a message-key library for the web (to be chosen), and the matching mechanism in Flutter.
+- **Translations (Decided):** next-intl on the web, English messages in `apps/web/messages/en.json`; the matching mechanism in Flutter is still open.
+- **Font files (Decided):** Bricolage Grotesque and Instrument Sans are self-hosted (latin subset, variable weight, SIL OFL licenses beside the files) and loaded with `next/font/local`, so builds and pages never call Google.
+- **Theme override (Proposed):** stored in a cookie per browser until the API has a user preference field.
 
 ## 13. Governance
 
@@ -290,6 +305,6 @@ Tokens live in code as CSS variables: roles change per theme, Tailwind reads the
 
 ## 14. Open decisions and what is still missing
 
-Open decisions: name availability checks; simplified logo for small sizes; favicon, app icon and social image; code font; icon set and stroke style; illustration style (line art built from the joint geometry); empty, loading and error state designs; compact density mode; data visualization colors for charts; dark logo review; light theme versions of the auth screens; responsive behavior of the auth screens on small phones.
+Open decisions: name availability checks; simplified logo for small sizes; favicon, app icon and social image; code font; icon set and stroke style; illustration style (line art built from the joint geometry; first use in the empty state); compact density mode; data visualization colors for charts; dark logo review; review of the Proposed workspace screens and states.
 
 Typically also part of a design system, not yet started: email and notification templates, onboarding flow, responsive behavior per screen, a component library with documentation, design QA process, and a record of how handoff works between this document and the code.
