@@ -1,6 +1,10 @@
 allowBuilds:
+  '@parcel/watcher': false
+  '@swc/core': false
   builds: true
+  core-js: false
   esbuild: true
+  protobufjs: false
   sharp: false
   unrs-resolver: false
 minimumReleaseAgeExclude:
