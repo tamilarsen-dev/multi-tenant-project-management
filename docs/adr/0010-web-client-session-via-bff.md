@@ -28,3 +28,13 @@ The API authenticates with an opaque Bearer token valid for up to 7 days ([ADR-0
 - `apps/web` needs a small API client used only on the server, plus route handlers for auth.
 - The web app must be served over HTTPS in production for the `Secure` cookie.
 - XSS can still act **as** the user while the page is open (it can call the BFF), but cannot exfiltrate the token for later use. XSS prevention (rendering user text as text) remains required.
+
+## Amendment (2026-11-12, during the M1 web implementation)
+
+Clarifications from building the BFF; the decision itself is unchanged.
+
+- **Item 2:** login and register are Next.js server actions rather than route handlers. Server actions can set cookies and get the built-in origin check required by item 4. The only route handler is `GET /auth/expired` (below), which changes nothing except clearing an already-invalid cookie.
+- **Item 5:** refreshing *after* a `401` cannot work: ADR-0003 refuses to refresh an expired or revoked session, which is exactly what `401` means. Refresh is proactive instead: on a full page load, once less than half of the 7-day window remains and the absolute expiry still allows the window to grow, the Next.js proxy rotates the token and passes the new one both to the current request and to the browser. A `401` sends the user to `/auth/expired`, which re-checks the cookie once (a parallel request may have just rotated it) and otherwise clears it and redirects to sign in.
+- **Rate limiting:** the BFF forwards the browser's address in `X-Forwarded-For` and the API trusts it only from the BFF (`TRUST_PROXY`); see [Security §4](../design/security.md#4-rate-limiting-and-input-limits), including the remaining gap.
+- **Cookie deletion:** a `__Host-` cookie is only deleted when the deleting `Set-Cookie` repeats `Secure` and `Path=/`; the BFF clears cookies by expiring them with their original attributes.
+
