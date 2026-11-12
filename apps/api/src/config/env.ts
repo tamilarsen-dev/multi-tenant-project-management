@@ -12,6 +12,13 @@ const envSchema = z.object({
     .default("http://localhost:5173")
     .transform((value) => value.split(",").map((origin) => origin.trim()))
     .pipe(z.array(z.url().min(1))),
+
+  /**
+   * Express `trust proxy` (security §4). Unset: the socket address is the client.
+   * Set to the address of the one trusted hop, e.g. "loopback" when the web BFF
+   * runs on the same host, so its X-Forwarded-For identifies the real client.
+   */
+  TRUST_PROXY: z.string().trim().min(1).optional(),
 });
 
 const databaseEnvSchema = z.object({
