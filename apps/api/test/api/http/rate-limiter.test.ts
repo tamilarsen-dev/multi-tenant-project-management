@@ -82,4 +82,26 @@ describe("Rate Limiter", () => {
     expect(responseA.status).toBe(429);
     expect(responseB.status).toBe(200);
   });
+
+  describe("behind the web BFF (trust proxy)", () => {
+    it("keys on X-Forwarded-For from a trusted hop, so users behind one BFF do not share a bucket", async () => {
+      const app = createTestApp({ windowMs: 60_000, limit: 1 }, "loopback");
+
+      const alice = await request(app).get("/healthz").set("X-Forwarded-For", "203.0.113.1");
+      const bob = await request(app).get("/healthz").set("X-Forwarded-For", "203.0.113.2");
+      const aliceAgain = await request(app).get("/healthz").set("X-Forwarded-For", "203.0.113.1");
+
+      expect([alice.status, bob.status, aliceAgain.status]).toEqual([200, 200, 429]);
+    });
+
+    it("ignores X-Forwarded-For when no proxy is trusted", async () => {
+      // The header is sent on purpose here; silence the library's misconfiguration warning.
+      const app = createTestApp({ windowMs: 60_000, limit: 1, validate: { xForwardedForHeader: false } });
+
+      await request(app).get("/healthz").set("X-Forwarded-For", "203.0.113.1");
+      const spoofed = await request(app).get("/healthz").set("X-Forwarded-For", "203.0.113.2");
+
+      expect(spoofed.status).toBe(429);
+    });
+  });
 });

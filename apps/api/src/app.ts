@@ -1,5 +1,6 @@
 import express from "express";
 
+import { env } from "./config/env.js";
 import { apiDocs } from "./http/api-docs.js";
 import { corsPolicy } from "./http/cors.js";
 import { errorHandler, notFoundHandler, requireJsonBody } from "./http/error-handler.js";
@@ -13,6 +14,7 @@ import organizationRoutes from "./modules/organization/organization.routes.js";
 export const app = express();
 
 app.disable("x-powered-by");
+if (env.TRUST_PROXY) app.set("trust proxy", env.TRUST_PROXY);
 
 app.use(requestLogger);
 app.use(createCspNonce);

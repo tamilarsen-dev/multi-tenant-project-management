@@ -18,14 +18,14 @@ Work proceeds in **vertical slices**: each slice delivers schema, domain rules, 
 
 | Milestone | Scope | Exit condition |
 |---|---|---|
-| **M1 — Identity & Organization** | Foundation alignment, auth with refresh, Organization CRUD | Register → login → refresh → create/list/read/update Organization verified end-to-end against PostgreSQL |
+| **M1 — Identity & Organization** | Foundation alignment, auth with refresh, Organization CRUD, web screens for both | Register → login → refresh → create/list/read/update Organization verified end-to-end against PostgreSQL, through the API and through the web app |
 | M2 — Membership & Invitation | Roster, role changes, removal, invitations, Outbox worker | Invite → accept/reactivate → remove, with last-Owner and concurrency tests green |
 | M3 — Projects | Project lifecycle | Archive/restore and tenant tests green |
 | M4 — Issues & Labels | Issues, numbering, assignment, status, labels | Concurrency (numbering, OCC, assign-vs-remove) tests green |
 | M5 — Collaboration | Comments, Activity feed, Notifications, retention | Notification recipient rules and retention tests green |
-| M6 — Hardening & release | Security review, per-email auth rate limit, DB roles, deployment, backups, load test | Release checklist complete with evidence |
+| M6 — Hardening & release | Security review, per-email auth rate limit, reverse proxy, DB roles, deployment, backups, load test | Release checklist complete with evidence |
 
-## 2. Current state (2026-11-11)
+## 2. Current state (2026-11-12)
 
 M1 is implemented on branch `feat/m1-identity-organization`; it becomes the baseline once merged.
 
@@ -37,9 +37,11 @@ M1 is implemented on branch `feat/m1-identity-organization`; it becomes the base
 | Membership model | FR-MEM-001 | Implemented | Schema only; endpoints are M2 |
 | Error catalog, validation, pagination, request id | — | Implemented | Strict schemas for params, query, body |
 | Persistence boundary | ADR-0009 | Implemented | Enforced by an ESLint import rule |
+| Web client for M1 | ADR-0010 | Implemented | Auth + workspace screens; browser-verified, no automated E2E suite yet |
 | OpenAPI | — | Implemented | All M1 endpoints; Redocly lint and bundle freshness checked in CI |
 | CI | — | Implemented | Adds schema-drift check (`prisma migrate diff --exit-code`) |
 | Auth rate limit per normalized email | Security §4 | Deferred to M6 | Global per-IP limiter only |
+| Reverse proxy overwriting `X-Forwarded-For` | Security §4 | Deferred to M6 | Until then browser clients can choose their rate-limit bucket |
 | Everything in M2–M6 | — | Planned | — |
 
 ## 3. M1 — Identity & Organization (in review)
@@ -59,8 +61,11 @@ Tasks are ordered; each is one PR. Requirement and decision references show why 
 | 1.9 | **Health:** add `/readyz` | Operations §4 | Done |
 | 1.10 | **OpenAPI and CI:** document every M1 endpoint and error; add bundle + lint step to CI | Workflow §4 | Done |
 | 1.11 | **Test suites for M1:** tenant isolation (§4.1), role matrix for Organization update (§4.2), refresh concurrency (§4.3), rollback tests (§4.4), workflow 1 (§4.5) | Testing §4–§5 | Done |
+| 1.12 | **Web foundation:** Detent tokens (light/dark, system default + override), self-hosted fonts, next-intl, Tailwind wiring, API types generated from OpenAPI | Design system §5–§12, Architecture §4.2 | Done |
+| 1.13 | **Web session (BFF):** HttpOnly cookie, server-only API client, proactive sliding refresh in the proxy, `/auth/expired` recovery, client IP forwarding + API `TRUST_PROXY` | ADR-0010 (amended), Security §4 | Done |
+| 1.14 | **Web screens:** sign in, create account (joined tiles), workspace list with pagination, create, detail, settings rename with conflict handling; empty, loading, error, not-found states | FR-AUTH-001..005, FR-ORG-001..004, Design system §10 | Done |
 
-Out of scope for M1: Membership endpoints, invitations, Outbox worker, projects, issues, the web client, session cleanup job, database role separation.
+Out of scope for M1: Membership endpoints, invitations, Outbox worker, projects, issues, session cleanup job, database role separation. The web client was added to M1 on 2026-11-12 (tasks 1.12–1.14) so the slice is usable end to end.
 
 ## 4. Later milestones
 

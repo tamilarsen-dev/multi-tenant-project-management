@@ -158,7 +158,24 @@ Owns the backend application, its runtime dependencies, database integration, AP
 
 **`apps/web`**
 
-Owns the web application and its frontend-specific dependencies, build, and tests.
+Owns the web application and its frontend-specific dependencies, build, and tests. Next.js App Router, acting as the BFF of [ADR-0010](../adr/0010-web-session-via-bff.md):
+
+```text
+apps/web/
+  messages/en.json            every interface string (next-intl); design system §3
+  src/
+    proxy.ts                  optimistic route guard + sliding session renewal
+    app/                      routes only: (auth)/, (app)/, auth/expired, error and not-found
+    features/<area>/          server actions, server-side data access, area components
+    components/               shared UI built on the design tokens
+    lib/
+      api/schema.d.ts         GENERATED from the API's OpenAPI bundle (pnpm --filter web api:types)
+      server/                 server-only: API client, session cookies, env, auth helpers
+      session-cookie.ts       pure cookie and redirect rules (unit tested)
+  test/                       unit tests (Vitest)
+```
+
+Rules: only `lib/server/` talks to the API, and only on the server (`import "server-only"`); API types come from the generated schema, never hand-copied; pages call feature functions, not `fetch`.
 
 **`docs`**
 
@@ -642,7 +659,7 @@ Do not silently change architecture through a local refactor that alters module 
 ## 19. Known limits
 
 - One API instance: in-memory rate limiting and the connection budget in [Database §7.11](database.md#711-single-vps-connection-and-timeout-baseline) assume a single process.
-- Additional shared workspace packages (for example a generated API client for `apps/web`) are not created until the web app consumes the API.
+- Additional shared workspace packages are not created yet. `apps/web` generates its API types from the OpenAPI bundle (a deliberately shared contract, §4.2 rule 8); CI fails if they are stale.
 
 Open decisions are tracked in the [Roadmap](../plan/roadmap.md#open-decisions).
 

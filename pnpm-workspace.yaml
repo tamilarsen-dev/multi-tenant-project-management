@@ -3,6 +3,11 @@ allowBuilds:
   esbuild: true
   sharp: false
   unrs-resolver: false
+minimumReleaseAgeExclude:
+  - icu-minify@4.15.0
+  - next-intl-swc-plugin-extractor@4.15.0
+  - next-intl@4.15.0
+  - use-intl@4.15.0
 packages:
   - "apps/*"
 permissions:
