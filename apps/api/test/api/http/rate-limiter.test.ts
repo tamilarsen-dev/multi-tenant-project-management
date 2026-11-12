@@ -95,7 +95,8 @@ describe("Rate Limiter", () => {
     });
 
     it("ignores X-Forwarded-For when no proxy is trusted", async () => {
-      const app = createTestApp({ windowMs: 60_000, limit: 1 });
+      // The header is sent on purpose here; silence the library's misconfiguration warning.
+      const app = createTestApp({ windowMs: 60_000, limit: 1, validate: { xForwardedForHeader: false } });
 
       await request(app).get("/healthz").set("X-Forwarded-For", "203.0.113.1");
       const spoofed = await request(app).get("/healthz").set("X-Forwarded-For", "203.0.113.2");
