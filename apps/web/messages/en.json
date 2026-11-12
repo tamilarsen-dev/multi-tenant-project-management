@@ -1,0 +1,120 @@
+{
+  "common": {
+    "appName": "detent",
+    "tagline": "Work that clicks into place.",
+    "skipToContent": "Skip to content",
+    "back": "Back",
+    "saving": "Saving…",
+    "loading": "Loading…"
+  },
+  "auth": {
+    "email": "Email",
+    "emailPlaceholder": "you@company.com",
+    "password": "Password",
+    "displayName": "Display name",
+    "displayNamePlaceholder": "Alex Morgan",
+    "passwordHint": "At least 12 characters.",
+    "sessionExpired": "Your session ended. Sign in again to continue.",
+    "signIn": {
+      "metaTitle": "Sign in",
+      "title": "Welcome back",
+      "subtitle": "Sign in to continue to your workspace.",
+      "submit": "Sign in",
+      "pending": "Signing in…",
+      "switchPrompt": "New to Detent?",
+      "switchLink": "Create an account"
+    },
+    "createAccount": {
+      "metaTitle": "Create account",
+      "title": "Create your account",
+      "subtitle": "Start with you. You can set up your team's workspace next.",
+      "submit": "Create account",
+      "pending": "Creating account…",
+      "switchPrompt": "Already have an account?",
+      "switchLink": "Sign in"
+    }
+  },
+  "errors": {
+    "INVALID_CREDENTIALS": "That email and password don't match.",
+    "EMAIL_ALREADY_EXISTS": "An account with this email already exists. Try signing in instead.",
+    "RATE_LIMIT_EXCEEDED": "Too many attempts. Wait a minute, then try again.",
+    "FORBIDDEN": "Only owners and admins can change this.",
+    "VERSION_CONFLICT": "Someone else changed this while you were editing. We loaded the latest version; check it and save again.",
+    "API_UNAVAILABLE": "We can't reach Detent right now. Try again in a moment.",
+    "UNKNOWN": "Something went wrong on our side. Try again in a moment.",
+    "field": {
+      "required": "Fill in this field.",
+      "email": "Enter an email address like name@company.com.",
+      "passwordMin": "Use at least 12 characters.",
+      "tooLong": "Use at most {max} characters.",
+      "invalid": "Check this value."
+    },
+    "page": {
+      "title": "Something went wrong",
+      "body": "This page didn't load. Your work is safe; try again.",
+      "retry": "Try again"
+    },
+    "notFound": {
+      "title": "We couldn't find that",
+      "body": "It may have been moved, or you may not have access to it.",
+      "home": "Go to your workspaces"
+    }
+  },
+  "nav": {
+    "workspaces": "Workspaces",
+    "account": "Account",
+    "signedInAs": "Signed in as {name}",
+    "signOut": "Sign out",
+    "theme": "Theme",
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "breadcrumb": "Breadcrumb"
+  },
+  "roles": {
+    "OWNER": "Owner",
+    "ADMIN": "Admin",
+    "MEMBER": "Member"
+  },
+  "workspaces": {
+    "metaTitle": "Workspaces",
+    "title": "Your workspaces",
+    "count": "{count, plural, one {# workspace} other {# workspaces}}",
+    "create": "Create workspace",
+    "loadMore": "Show more",
+    "loadingMore": "Loading…",
+    "created": "Created {date}",
+    "yourRole": "Your role: {role}",
+    "empty": {
+      "title": "Nothing here yet",
+      "body": "Create your first workspace and watch your team's work click into place."
+    },
+    "new": {
+      "metaTitle": "Create workspace",
+      "title": "Create a workspace",
+      "subtitle": "A workspace holds your team's projects and tasks. You can rename it later.",
+      "name": "Workspace name",
+      "namePlaceholder": "Acme Engineering",
+      "submit": "Create workspace",
+      "pending": "Creating…",
+      "cancel": "Cancel"
+    },
+    "detail": {
+      "settings": "Settings",
+      "memberSince": "Member since {date}",
+      "readyTitle": "This workspace is ready",
+      "readyBody": "Projects and tasks will live here."
+    },
+    "settings": {
+      "metaTitle": "Workspace settings",
+      "title": "Workspace settings",
+      "general": "General",
+      "name": "Workspace name",
+      "submit": "Save changes",
+      "pending": "Saving…",
+      "saved": "Saved.",
+      "readOnly": "Only owners and admins can rename this workspace. You're a {role}."
+    },
+    "loadMoreFailed": "Couldn't load more workspaces. Try again."
+  }
+}
