@@ -158,7 +158,7 @@ Owns the backend application, its runtime dependencies, database integration, AP
 
 **`apps/web`**
 
-Owns the web application and its frontend-specific dependencies, build, and tests. Next.js App Router, acting as the BFF of [ADR-0010](../adr/0010-web-session-via-bff.md):
+Owns the web application and its frontend-specific dependencies, build, and tests. Next.js App Router, acting as the BFF of [ADR-0010](../adr/0010-web-client-session-via-bff.md):
 
 ```text
 apps/web/
