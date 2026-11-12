@@ -8,13 +8,14 @@ import { FormAlert } from "@/components/form-alert";
 import type { FormState } from "@/lib/form-state";
 
 import { signIn, type SignInField } from "./actions";
-import { JoinedField, JoinedSubmit } from "./joined-field";
+import { JoinedField, JoinedSubmit, useStageSignals } from "./joined-field";
 
 const initial: FormState<SignInField> = { status: "idle" };
 
 export function SignInForm({ next, notice }: { next: string; notice?: string }) {
   const t = useTranslations("auth");
   const [state, action, pending] = useActionState(signIn, initial);
+  useStageSignals(pending, state, state.status === "error");
 
   return (
     <>
@@ -23,6 +24,7 @@ export function SignInForm({ next, notice }: { next: string; notice?: string }) 
         <FormAlert message={state.formError ?? (state.status === "idle" ? notice : undefined)} />
         <JoinedField
           name="email"
+          stageField="email"
           label={t("email")}
           type="email"
           autoComplete="email"
@@ -33,11 +35,13 @@ export function SignInForm({ next, notice }: { next: string; notice?: string }) 
         />
         <JoinedField
           name="password"
+          stageField="password"
+          revealable
+          joined
           label={t("password")}
           type="password"
           autoComplete="current-password"
           error={state.fieldErrors?.password}
-          joined
           required
         />
         <JoinedSubmit label={t("signIn.submit")} pendingLabel={t("signIn.pending")} pending={pending} />

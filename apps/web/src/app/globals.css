@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Laptop screens with little height (e.g. 1366 x 657 after browser chrome). */
+@custom-variant short (@media (max-height: 760px));
+
 /*
  * Detent tokens (docs/ui/detent-design-system.md §5–§9).
  * Components use semantic roles only; themes redefine the roles.
@@ -20,7 +23,6 @@
   --accent-soft: #ece2ff;
   --accent-ink: #562c8b;
   --on-accent: #ffffff;
-  --mark-tint: #efecf9;
 
   --danger-text: #923240;
   --danger-bg: #ffe6e7;
@@ -49,7 +51,6 @@
     --accent-soft: #371b5b;
     --accent-ink: #d9c6fe;
     --on-accent: #0b0a10;
-    --mark-tint: #1b1a21;
     --danger-text: #ffa3ab;
     --danger-bg: #4b1d22;
     --success-text: #78dca9;
@@ -75,7 +76,6 @@
   --accent-soft: #371b5b;
   --accent-ink: #d9c6fe;
   --on-accent: #0b0a10;
-  --mark-tint: #1b1a21;
   --danger-text: #ffa3ab;
   --danger-bg: #4b1d22;
   --success-text: #78dca9;
@@ -99,7 +99,6 @@
   --color-accent-soft: var(--accent-soft);
   --color-accent-ink: var(--accent-ink);
   --color-on-accent: var(--on-accent);
-  --color-mark-tint: var(--mark-tint);
   --color-danger-text: var(--danger-text);
   --color-danger-bg: var(--danger-bg);
   --color-success-text: var(--success-text);
@@ -216,19 +215,358 @@
       background-color 120ms var(--ease-standard);
   }
 
-  .joint-submit:active:not(:disabled) {
+  .joint-submit:active:not(:disabled),
+  .joint-submit[data-pressed] {
     transform: translateY(2px);
   }
 
-  /* Decorative mark: its peg starts retracted and clicks in while a field has focus. */
-  .stage-mark-peg {
-    transform-box: fill-box;
-    transform: translateX(2px);
-    transition: transform 240ms var(--ease-click);
+  /*
+   * Peg, climbing (peg.tsx), from 640 px. The body sits behind the tiles
+   * (z-index -1 inside the isolated auth column); the grips sit on top of the
+   * field edge. JS writes transforms; moods below.
+   */
+  .climber {
+    display: none;
   }
 
-  .stage:has(input:focus) .stage-mark-peg {
-    transform: translateX(0);
+  @media (min-width: 640px) {
+    .climber {
+      display: block;
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .peg,
+    .peg-bar {
+      display: none;
+    }
+  }
+
+  .climber__body {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: -1;
+    width: 120px;
+    height: 144px;
+    border-radius: 38px 46px 46px 38px;
+    background: var(--accent);
+    /* A ring in the page colour keeps Peg readable against the accent button. */
+    box-shadow: 0 0 0 3px var(--bg);
+    pointer-events: auto;
+    cursor: pointer;
+    transform-origin: 44px 50%;
+    will-change: transform;
+  }
+
+  .climber__ridge {
+    position: absolute;
+    right: 14px;
+    top: 16px;
+    width: 26px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--accent-hover);
+    box-shadow: 0 8px 0 var(--accent-hover);
+    opacity: 0.6;
+  }
+
+  .climber__face {
+    position: absolute;
+    left: 48px;
+    right: 8px;
+    top: 42px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .climber__eyes {
+    display: flex;
+    gap: 10px;
+  }
+
+  .climber__eye {
+    position: relative;
+    width: 20px;
+    height: 30px;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+    transform-origin: 50% 50%;
+    animation: peg-blink 5.6s infinite;
+    transition: transform 140ms var(--ease-standard);
+  }
+
+  .climber__eye + .climber__eye {
+    animation-delay: 60ms;
+  }
+
+  .climber__pupil {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 10px;
+    height: 14px;
+    margin: -7px 0 0 -5px;
+    border-radius: 4px;
+    background: #141319;
+    will-change: transform;
+  }
+
+  .climber__mouth {
+    width: 20px;
+    height: 9px;
+    border: 4px solid var(--on-accent);
+    border-top: 0;
+    border-radius: 0 0 99px 99px;
+    transition:
+      transform 160ms var(--ease-standard),
+      width 160ms var(--ease-standard),
+      height 160ms var(--ease-standard),
+      border-radius 160ms var(--ease-standard);
+  }
+
+  .climber__hand {
+    position: absolute;
+    left: 32px;
+    z-index: 2;
+    width: 24px;
+    height: 15px;
+    border-radius: 7px;
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--bg);
+    will-change: transform;
+  }
+  .climber__hand--top {
+    top: 36px;
+  }
+  .climber__hand--bottom {
+    top: 92px;
+  }
+
+  .climber[data-mood="watch"] .climber__mouth {
+    width: 11px;
+    height: 11px;
+    border-top: 4px solid var(--on-accent);
+    border-radius: 50%;
+  }
+
+  .climber[data-mood="shy"] .climber__eye {
+    animation: none;
+    transform: scaleY(0.12);
+  }
+  .climber[data-mood="shy"] .climber__mouth {
+    width: 12px;
+    height: 0;
+    border-radius: 2px;
+  }
+
+  /* look-away: eyes up and away, lips pursed (whistling) */
+  .climber[data-mood="look-away"] .climber__mouth {
+    width: 8px;
+    height: 8px;
+    border-top: 4px solid var(--on-accent);
+    border-radius: 50%;
+    transform: translateX(6px);
+  }
+
+  .climber[data-mood="busy"] .climber__eye {
+    animation: none;
+    transform: scaleY(0.6);
+  }
+
+  .climber[data-mood="sad"] .climber__mouth {
+    transform: rotate(180deg);
+  }
+
+  .climber[data-poked] .climber__mouth {
+    width: 28px;
+    height: 14px;
+  }
+
+  /*
+   * Peg (peg.tsx): a big peg plugged into the bar at the top of the screen,
+   * hanging down beside the form. JS drives its length (a spring), sway and
+   * eyes; moods below. Transforms and opacity only.
+   */
+  .peg-bar {
+    position: fixed;
+    inset: 0 0 auto;
+    height: 10px;
+    background: var(--surface-sunken);
+    border-bottom: 1px solid var(--border);
+    z-index: 21;
+  }
+
+  .peg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 20;
+    width: var(--peg-w, 112px);
+    height: 100dvh;
+    transform-origin: 50% 0;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .peg__socket {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: calc(var(--peg-w, 112px) + 24px);
+    height: 18px;
+    translate: -50% 0;
+    background: var(--surface-sunken);
+    border: 1px solid var(--border);
+    border-top: 0;
+    border-radius: 0 0 12px 12px;
+    z-index: 2;
+  }
+
+  .peg__body {
+    position: absolute;
+    inset: 0;
+    border-radius: 0 0 calc(var(--peg-w, 112px) * 0.42) calc(var(--peg-w, 112px) * 0.42);
+    background: var(--accent);
+    pointer-events: auto;
+    cursor: pointer;
+    will-change: transform;
+  }
+
+  /* The grip ridges of a peg. */
+  .peg__ridge {
+    position: absolute;
+    left: 14%;
+    right: 14%;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--accent-hover);
+    opacity: 0.55;
+  }
+
+  .peg__face {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--peg-w, 112px) * 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: calc(var(--peg-w, 112px) * 0.08);
+    transition: opacity 160ms var(--ease-standard);
+  }
+
+  .peg__eyes {
+    display: flex;
+    gap: calc(var(--peg-w, 112px) * 0.12);
+  }
+
+  .peg__eye {
+    position: relative;
+    width: calc(var(--peg-w, 112px) * 0.17);
+    height: calc(var(--peg-w, 112px) * 0.25);
+    border-radius: calc(var(--peg-w, 112px) * 0.06);
+    background: #fff;
+    overflow: hidden;
+    transform-origin: 50% 50%;
+    animation: peg-blink 5.6s infinite;
+    transition: transform 140ms var(--ease-standard);
+  }
+
+  .peg__pupil {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 52%;
+    height: 46%;
+    margin: -23% 0 0 -26%;
+    border-radius: 30%;
+    background: #141319;
+    will-change: transform;
+  }
+
+  .peg__mouth {
+    width: calc(var(--peg-w, 112px) * 0.2);
+    height: calc(var(--peg-w, 112px) * 0.09);
+    border: 4px solid var(--on-accent);
+    border-top: 0;
+    border-radius: 0 0 99px 99px;
+    transition:
+      transform 160ms var(--ease-standard),
+      width 160ms var(--ease-standard),
+      height 160ms var(--ease-standard),
+      border-radius 160ms var(--ease-standard);
+  }
+
+  /* watch: reading along, mouth a small "o" */
+  .peg[data-mood="watch"] .peg__mouth {
+    width: calc(var(--peg-w, 112px) * 0.1);
+    height: calc(var(--peg-w, 112px) * 0.1);
+    border-top: 4px solid var(--on-accent);
+    border-radius: 50%;
+  }
+
+  /* shy: pulls up and shuts its eyes; peeks now and then */
+  .peg[data-mood="shy"] .peg__eye {
+    animation: none;
+    transform: scaleY(0.12);
+  }
+  .peg[data-mood="shy"] .peg__eye:last-child {
+    animation: peg-peek 4.6s 1.4s infinite;
+  }
+  .peg[data-mood="shy"] .peg__mouth {
+    width: calc(var(--peg-w, 112px) * 0.12);
+    border-radius: 2px;
+    height: 0;
+  }
+
+  /* look-away: the password is shown, so Peg hides almost completely (JS) and closes its eyes */
+  .peg[data-mood="look-away"] .peg__eye {
+    animation: none;
+    transform: scaleY(0.12);
+  }
+
+  /* busy: determined squint */
+  .peg[data-mood="busy"] .peg__eye {
+    animation: none;
+    transform: scaleY(0.6);
+  }
+
+  /* sad: mouth turns down (JS shakes it) */
+  .peg[data-mood="sad"] .peg__mouth {
+    transform: rotate(180deg);
+  }
+
+  /* poked: a big grin */
+  .peg[data-poked] .peg__mouth {
+    height: calc(var(--peg-w, 112px) * 0.13);
+    width: calc(var(--peg-w, 112px) * 0.28);
+  }
+
+  @keyframes peg-blink {
+    0%,
+    94%,
+    100% {
+      transform: scaleY(1);
+    }
+    96% {
+      transform: scaleY(0.1);
+    }
+  }
+
+  @keyframes peg-peek {
+    0%,
+    70%,
+    100% {
+      transform: scaleY(0.12);
+    }
+    76%,
+    90% {
+      transform: scaleY(1);
+    }
   }
 
   .skeleton {

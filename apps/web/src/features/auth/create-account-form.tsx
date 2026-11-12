@@ -8,13 +8,14 @@ import { FormAlert } from "@/components/form-alert";
 import type { FormState } from "@/lib/form-state";
 
 import { createAccount, type CreateAccountField } from "./actions";
-import { JoinedField, JoinedSubmit } from "./joined-field";
+import { JoinedField, JoinedSubmit, useStageSignals } from "./joined-field";
 
 const initial: FormState<CreateAccountField> = { status: "idle" };
 
 export function CreateAccountForm() {
   const t = useTranslations("auth");
   const [state, action, pending] = useActionState(createAccount, initial);
+  useStageSignals(pending, state, state.status === "error");
 
   return (
     <>
@@ -22,6 +23,7 @@ export function CreateAccountForm() {
         <FormAlert message={state.formError} />
         <JoinedField
           name="displayName"
+          stageField="name"
           label={t("displayName")}
           autoComplete="name"
           placeholder={t("displayNamePlaceholder")}
@@ -32,17 +34,21 @@ export function CreateAccountForm() {
         />
         <JoinedField
           name="email"
+          stageField="email"
+          joined
           label={t("email")}
           type="email"
           autoComplete="email"
           placeholder={t("emailPlaceholder")}
           defaultValue={state.values?.email}
           error={state.fieldErrors?.email}
-          joined
           required
         />
         <JoinedField
           name="password"
+          stageField="password"
+          revealable
+          joined
           label={t("password")}
           type="password"
           autoComplete="new-password"
@@ -50,7 +56,6 @@ export function CreateAccountForm() {
           error={state.fieldErrors?.password}
           minLength={12}
           maxLength={128}
-          joined
           required
         />
         <JoinedSubmit label={t("createAccount.submit")} pendingLabel={t("createAccount.pending")} pending={pending} />

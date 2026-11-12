@@ -32,7 +32,11 @@
       "pending": "Creating account…",
       "switchPrompt": "Already have an account?",
       "switchLink": "Sign in"
-    }
+    },
+    "showPassword": "Show",
+    "hidePassword": "Hide",
+    "showPasswordLabel": "Show password",
+    "hidePasswordLabel": "Hide password"
   },
   "errors": {
     "INVALID_CREDENTIALS": "That email and password don't match.",
