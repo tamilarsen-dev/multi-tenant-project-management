@@ -1,26 +1,253 @@
 @import "tailwindcss";
 
+/*
+ * Detent tokens (docs/ui/detent-design-system.md §5–§9).
+ * Components use semantic roles only; themes redefine the roles.
+ * Theme: follows the system unless <html data-theme="light|dark"> overrides it.
+ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --bg: #faf9ff;
+  --surface: #ffffff;
+  --surface-sunken: #f3f2fb;
+  --border: #e7e7f0;
+  --border-strong: #86858d;
+  --text: #1f1e25;
+  --text-muted: #4d4c53;
+  --accent: #8b54d4;
+  --accent-hover: #723eb5;
+  --accent-soft: #ece2ff;
+  --accent-ink: #562c8b;
+  --on-accent: #ffffff;
+  --mark-tint: #efecf9;
+
+  --danger-text: #923240;
+  --danger-bg: #ffe6e7;
+  --success-text: #006d3d;
+  --success-bg: #daf9e7;
+  --info-text: #005a9d;
+  --info-bg: #ddf3ff;
+
+  --elevation-1: 0 1px 2px rgb(20 19 25 / 0.06);
+  --elevation-2: 0 8px 24px rgb(20 19 25 / 0.12);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+/* Dark roles appear twice (system preference, explicit choice); keep both blocks identical. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #141319;
+    --surface: #1f1e25;
+    --surface-sunken: #0b0a10;
+    --border: #333239;
+    --border-strong: #696870;
+    --text: #e7e7f0;
+    --text-muted: #a4a3ac;
+    --accent: #a679ed;
+    --accent-hover: #c1a0fb;
+    --accent-soft: #371b5b;
+    --accent-ink: #d9c6fe;
+    --on-accent: #0b0a10;
+    --mark-tint: #1b1a21;
+    --danger-text: #ffa3ab;
+    --danger-bg: #4b1d22;
+    --success-text: #78dca9;
+    --success-bg: #003821;
+    --info-text: #86caff;
+    --info-bg: #0d2f4f;
+    --elevation-1: none;
+    --elevation-2: none;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141319;
+  --surface: #1f1e25;
+  --surface-sunken: #0b0a10;
+  --border: #333239;
+  --border-strong: #696870;
+  --text: #e7e7f0;
+  --text-muted: #a4a3ac;
+  --accent: #a679ed;
+  --accent-hover: #c1a0fb;
+  --accent-soft: #371b5b;
+  --accent-ink: #d9c6fe;
+  --on-accent: #0b0a10;
+  --mark-tint: #1b1a21;
+  --danger-text: #ffa3ab;
+  --danger-bg: #4b1d22;
+  --success-text: #78dca9;
+  --success-bg: #003821;
+  --info-text: #86caff;
+  --info-bg: #0d2f4f;
+  --elevation-1: none;
+  --elevation-2: none;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-on-accent: var(--on-accent);
+  --color-mark-tint: var(--mark-tint);
+  --color-danger-text: var(--danger-text);
+  --color-danger-bg: var(--danger-bg);
+  --color-success-text: var(--success-text);
+  --color-success-bg: var(--success-bg);
+  --color-info-text: var(--info-text);
+  --color-info-bg: var(--info-bg);
+
+  --font-sans: var(--font-instrument-sans), system-ui, sans-serif;
+  --font-display: var(--font-bricolage), system-ui, sans-serif;
+
+  --shadow-1: var(--elevation-1);
+  --shadow-2: var(--elevation-2);
+}
+
+@theme {
+  /* Type scale (§6): size / line height. */
+  --text-display: 44px;
+  --text-display--line-height: 48px;
+  --text-h1: 36px;
+  --text-h1--line-height: 42px;
+  --text-h2: 28px;
+  --text-h2--line-height: 34px;
+  --text-h3: 22px;
+  --text-h3--line-height: 28px;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 28px;
+  --text-body: 16px;
+  --text-body--line-height: 24px;
+  --text-label: 14px;
+  --text-label--line-height: 20px;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+
+  /* Shape (§7). */
+  --radius-control: 10px;
+  --radius-card: 14px;
+  --radius-tile: 16px;
+
+  /* Motion (§9). */
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-click: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+  }
+}
+
+/*
+ * The joint (§8) on auth tiles: a notch cut into the top edge of a tile and a
+ * peg bridging the gap from the tile above. The peg seats 3 px lower when its
+ * tile has focus; the submit tile presses 2 px when active.
+ */
+@layer components {
+  .joint-tile {
+    position: relative;
+  }
+
+  .joint-tile > .joint-notch {
+    position: absolute;
+    left: 29px;
+    top: -1px;
+    width: 18px;
+    height: 6px;
+    background: var(--bg);
+    border-radius: 0 0 4px 4px;
+    z-index: 1;
+  }
+
+  .joint-tile > .joint-peg {
+    position: absolute;
+    left: 32px;
+    top: -13px;
+    width: 12px;
+    height: 18px;
+    background: var(--accent);
+    border-radius: 3px;
+    z-index: 2;
+    transition: transform 180ms var(--ease-click);
+  }
+
+  .joint-tile:focus-within > .joint-peg {
+    transform: translateY(3px);
+  }
+
+  .joint-submit {
+    transition:
+      transform 180ms var(--ease-click),
+      background-color 120ms var(--ease-standard);
+  }
+
+  .joint-submit:active:not(:disabled) {
+    transform: translateY(2px);
+  }
+
+  /* Decorative mark: its peg starts retracted and clicks in while a field has focus. */
+  .stage-mark-peg {
+    transform-box: fill-box;
+    transform: translateX(2px);
+    transition: transform 240ms var(--ease-click);
+  }
+
+  .stage:has(input:focus) .stage-mark-peg {
+    transform: translateX(0);
+  }
+
+  .skeleton {
+    background: var(--surface-sunken);
+    animation: skeleton-pulse 1.4s var(--ease-standard) infinite;
+  }
+
+  @keyframes skeleton-pulse {
+    50% {
+      opacity: 0.55;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
 }

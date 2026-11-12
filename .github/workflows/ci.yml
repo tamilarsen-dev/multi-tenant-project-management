@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   quality-checks:
-    name: API Quality Checks
+    name: Quality Checks
     runs-on: ubuntu-24.04
     timeout-minutes: 15
 
@@ -87,6 +87,11 @@ jobs:
         run: |
           pnpm --filter api docs:bundle
           git diff --exit-code -- apps/api/docs/openapi/openapi-bundled.yaml
+
+      - name: Check web API types match the OpenAPI bundle
+        run: |
+          pnpm --filter web api:types
+          git diff --exit-code -- apps/web/src/lib/api/schema.d.ts
 
       - name: Typecheck
         run: pnpm typecheck
