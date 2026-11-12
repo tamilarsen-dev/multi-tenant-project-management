@@ -14,8 +14,9 @@ import { parseRequest } from "../../src/http/validate.js";
  * The production middleware stack plus debug routes that trigger specific failures,
  * for testing cross-cutting HTTP behavior in isolation.
  */
-export function createTestApp(rateLimitOptions: Partial<Options> = {}) {
+export function createTestApp(rateLimitOptions: Partial<Options> = {}, trustProxy?: string) {
   const app = express();
+  if (trustProxy) app.set("trust proxy", trustProxy);
 
   app.disable("x-powered-by");
   app.use(requestLogger);

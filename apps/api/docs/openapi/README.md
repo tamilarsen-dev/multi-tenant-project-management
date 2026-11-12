@@ -36,7 +36,7 @@ openapi-bundled.yaml         GENERATED — served by /docs; never edit by hand
 
 ```bash
 pnpm --filter api docs:lint     # validate the source spec (Redocly)
-pnpm --filter api docs:bundle   # regenerate openapi-bundled.yaml (Scalar CLI, Node >= 24)
+pnpm --filter api docs:bundle   # regenerate openapi-bundled.yaml (Redocly; hoists refs into components)
 ```
 
 CI lints the spec and fails if the committed bundle is stale.
