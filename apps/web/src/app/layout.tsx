@@ -39,7 +39,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       data-theme={theme === "system" ? undefined : theme}
       className={`${bricolage.variable} ${instrumentSans.variable}`}
     >
-      <body className="min-h-dvh bg-bg text-text">
+      {/* Browser extensions (e.g. Grammarly) add attributes to <body> before hydration. */}
+      <body className="min-h-dvh bg-bg text-text" suppressHydrationWarning>
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>
     </html>
