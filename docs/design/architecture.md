@@ -167,6 +167,8 @@ apps/web/
     proxy.ts                  optimistic route guard + sliding session renewal
     app/                      routes only: (auth)/, (app)/, auth/expired, error and not-found
     features/<area>/          server actions, server-side data access, area components
+    features/peg/             Peg: one figure, the motion catalogue (motion.ts), the conductor
+                              (PegProvider), PegLink; screens name a transition, never animate
     components/               shared UI built on the design tokens
     lib/
       api/schema.d.ts         GENERATED from the API's OpenAPI bundle (pnpm --filter web api:types)

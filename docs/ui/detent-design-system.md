@@ -1,6 +1,6 @@
 # Detent Design System
 
-Version 0.4 · working draft · November 12, 2026 · owner: project author
+Version 0.5 · working draft · November 13, 2026 · owner: project author
 
 ## 1. Purpose and how to use this document
 
@@ -8,7 +8,7 @@ This is the single reference for how Detent looks, sounds and moves. Design and 
 
 Status tags used throughout: **Decided** (chosen by the owner), **Proposed** (a default suggested during design work, not yet reviewed), **Open** (not decided yet).
 
-Change log: v0.4 (November 12, 2026): the owner asked for a living character on the auth screens in Detent's own style. Peg, the joint's peg brought to life as a character that climbs the form, replaces the cropped decorative mark (section 10, Proposed); the auth screen fits one viewport; passwords get a show/hide toggle. The `mark-tint` role is withdrawn. v0.3 (November 12, 2026): first implementation in `apps/web`. A new role and the workspace screens, empty, loading and error states are Proposed (section 10); translation library and font loading decided (section 12). v0.2 (November 9, 2026): the owner accepted every item that was Proposed in v0.1, so they are now Decided. Numeric values (motion timings, type scale, sizes) stay open to tuning during implementation. The auth screen direction was added (section 10) and the old side-panel auth layout was removed.
+Change log: v0.5 (November 13, 2026): Peg motion, one figure for every Peg, a vocabulary of six moves and a catalogue of named transitions for page changes and in-place feedback (section 10, Proposed). v0.4 (November 12, 2026): the owner asked for a living character on the auth screens in Detent's own style. Peg, the joint's peg brought to life as a character that climbs the form, replaces the cropped decorative mark (section 10, Proposed); the auth screen fits one viewport; passwords get a show/hide toggle. The `mark-tint` role is withdrawn. v0.3 (November 12, 2026): first implementation in `apps/web`. A new role and the workspace screens, empty, loading and error states are Proposed (section 10); translation library and font loading decided (section 12). v0.2 (November 9, 2026): the owner accepted every item that was Proposed in v0.1, so they are now Decided. Numeric values (motion timings, type scale, sizes) stay open to tuning during implementation. The auth screen direction was added (section 10) and the old side-panel auth layout was removed.
 
 ## 2. Brand foundation
 
@@ -233,6 +233,29 @@ Every interactive component must define these states before it is built: default
 - Entrance: when the page appears, Peg peeks out from behind the submit button as if through a door, looks left and right, then jumps in an arc up to the first field and grabs its edge with a small squash. Any interaction cuts straight to the jump. Peg is never drawn before it has been placed, and the part of its body behind a field's edge is clipped, so it always appears to come from behind that edge.
 - Signing in, one flow into the app: on success Peg gives a happy hop (smiling eyes, wide grin) while the form fades and lifts, then leaps up and out of view; the app opens about 0.9 s later (at once with reduced motion). In the app, Peg hangs from a socket on the bottom edge of the header, just far enough to show its face, drops out of it on arrival and greets the user by first name in a small bubble ("Welcome back, Dana!", or "Welcome, Dana!" after creating an account) for about 3 seconds. It then stays: blinks, follows the pointer, grins when poked. It never hangs further than the page's top padding, so it covers no content.
 - Below 640 px there is no room beside the form, so a smaller Peg (60 px wide) hangs from a socket in a thin bar at the top of the screen, in the corner, with the same moods.
+- **Peg motion (Proposed, v0.5).** Every Peg renders one figure (`apps/web/src/features/peg/peg-figure.tsx`) and moves only with a fixed vocabulary, so it looks and behaves the same on every screen. Screens never invent animations; they name a transition.
+
+  | Move | Meaning | Duration |
+  |---|---|---|
+  | hop | joy: a quick jump with a squash on landing | 480 ms |
+  | nod | agreement: "saved", "got it" | 460 ms |
+  | shake | "no": something went wrong | 480 ms |
+  | wave | goodbye: a swing from its socket | 760 ms |
+  | squash | arrival: the "click" of seating in a socket | 280 ms |
+  | wink | acknowledgement without words | 520 ms |
+
+  | Transition | Use it for | Peg | Page |
+  |---|---|---|---|
+  | forward | opening something (a workspace, settings, the create page) | ducks into its socket, drops back in with a squash | fades up out, comes in from below |
+  | back | going up a level (breadcrumbs, cancel, the logo) | ducks in, drops back in | fades down out, comes in from above |
+  | create | something new was made | hop, then as forward, stays happy a moment | as forward |
+  | save | a change was saved | nod | does not move |
+  | error | a request failed (conflict, permission) | shake | does not move |
+  | theme | the theme changed | wink | does not move |
+  | logout | signing out | wave, then up into its socket | fades out; the sign-in Peg takes over |
+  | greet | arriving after sign-in or sign-up | drops in, squash, happy with a greeting bubble | does not move |
+
+  Rules: anything that plays before a navigation stays under 1 s, and the next page loads while it plays; feedback in place never moves the page or Peg's socket; links use `PegLink` (or `ButtonLink` with `transition`), which loads pages on hover or focus rather than on sight, and leaves modified clicks (new tab) to the browser. With reduced motion, moves and slides are skipped and navigation is immediate.
 - A 3 px ring in the page colour keeps Peg readable against the accent button. Peg is decoration only (hidden from assistive technology); everything it acts out is also stated in text. One animation frame loop writes transforms only.
 - With reduced motion, Peg moves straight to each spot, never tracks or bounces, and all transitions are disabled.
 - Password fields have a show/hide toggle (a text button with `aria-pressed`).

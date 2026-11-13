@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+import { PegFigure } from "@/features/peg/peg-figure";
+
 import { useAuthStage, type Mood } from "./auth-stage";
 
 /**
@@ -38,7 +40,7 @@ export function HangingPeg() {
     const peg = root.current;
     if (!peg) return;
     const body = peg.querySelector<HTMLElement>(".peg__body")!;
-    const pupils = Array.from(peg.querySelectorAll<HTMLElement>(".peg__pupil"));
+    const pupils = Array.from(peg.querySelectorAll<HTMLElement>(".peg-fig__pupil"));
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const pointer = { x: 0, y: 0, active: false };
@@ -223,19 +225,7 @@ export function HangingPeg() {
       <div ref={root} className="peg" data-mood={mood} aria-hidden="true">
         <span className="peg__socket" />
         <span className="peg__body">
-          <span className="peg__ridge" style={{ bottom: "calc(var(--peg-w) * 1.02)" }} />
-          <span className="peg__ridge" style={{ bottom: "calc(var(--peg-w) * 1.14)" }} />
-          <span className="peg__face">
-            <span className="peg__eyes">
-              <span className="peg__eye">
-                <span className="peg__pupil" />
-              </span>
-              <span className="peg__eye">
-                <span className="peg__pupil" />
-              </span>
-            </span>
-            <span className="peg__mouth" />
-          </span>
+          <PegFigure shape="hang" />
         </span>
       </div>
     </>

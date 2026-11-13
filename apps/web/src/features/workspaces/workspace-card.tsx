@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PegLink } from "@/features/peg/peg-link";
 import { useFormatter, useTranslations } from "next-intl";
 
 import { Pill } from "@/components/role-pill";
@@ -11,7 +11,8 @@ export function WorkspaceCard({ item }: { item: OrganizationWithMembership }) {
 
   return (
     <li>
-      <Link
+      <PegLink
+        transition="forward"
         href={`/workspaces/${organization.id}`}
         className={
           "flex h-full flex-col gap-4 rounded-card border border-border bg-surface p-5 shadow-1 " +
@@ -25,7 +26,7 @@ export function WorkspaceCard({ item }: { item: OrganizationWithMembership }) {
             {t("workspaces.created", { date: format.dateTime(new Date(organization.createdAt), { dateStyle: "medium" }) })}
           </span>
         </span>
-      </Link>
+      </PegLink>
     </li>
   );
 }

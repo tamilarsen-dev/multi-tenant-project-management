@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+import { PegFigure } from "@/features/peg/peg-figure";
+
 import { useAuthStage, type Mood } from "./auth-stage";
 import { HangingPeg } from "./hanging-peg";
 
@@ -92,7 +94,7 @@ function ClimbingPeg() {
     if (!peg || !column) return;
     const body = peg.querySelector<HTMLElement>(".climber__body")!;
     const hands = Array.from(peg.querySelectorAll<HTMLElement>(".climber__hand"));
-    const pupils = Array.from(peg.querySelectorAll<HTMLElement>(".climber__pupil"));
+    const pupils = Array.from(peg.querySelectorAll<HTMLElement>(".peg-fig__pupil"));
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const pointer = { x: 0, y: 0, active: false };
@@ -331,18 +333,7 @@ function ClimbingPeg() {
   return (
     <div ref={root} className="climber" data-mood={mood} aria-hidden="true">
       <span className="climber__body">
-        <span className="climber__ridge" />
-        <span className="climber__face">
-          <span className="climber__eyes">
-            <span className="climber__eye">
-              <span className="climber__pupil" />
-            </span>
-            <span className="climber__eye">
-              <span className="climber__pupil" />
-            </span>
-          </span>
-          <span className="climber__mouth" />
-        </span>
+        <PegFigure shape="climb" />
       </span>
       <span className="climber__hand climber__hand--top" />
       <span className="climber__hand climber__hand--bottom" />
