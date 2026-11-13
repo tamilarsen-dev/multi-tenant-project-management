@@ -6,9 +6,9 @@ export async function AuthHeading({ title, subtitle }: { title: string; subtitle
   const t = await getTranslations("common");
   return (
     <>
-      <Logo size={44} label={t("appName")} />
+      <Logo size={34} label={t("appName")} />
       <div className="text-center">
-        <h1 className="mb-2 text-[40px] leading-[1.1] font-bold">{title}</h1>
+        <h1 className="mb-1.5 text-h2 font-bold sm:text-h1 short:text-h2">{title}</h1>
         <p className="text-text-muted">{subtitle}</p>
       </div>
     </>

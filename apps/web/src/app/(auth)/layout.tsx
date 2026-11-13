@@ -1,17 +1,18 @@
-import { getTranslations } from "next-intl/server";
+import { AuthStage } from "@/features/auth/auth-stage";
+import { Peg } from "@/features/auth/peg";
 
-import { StageMark } from "@/components/logo";
-
-/** Shared auth layout (design system §10): one centred 400 px column, decorative mark, tagline. */
-export default async function AuthLayout({ children }: { children: React.ReactNode }) {
-  const t = await getTranslations("common");
+/**
+ * Auth layout (design system §10): one centred 400 px column that fits the
+ * screen without page scroll, and Peg hanging from the bar at the top. The column scrolls on its own only when zoom or a
+ * very small viewport leaves no other choice.
+ */
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="stage relative flex min-h-dvh items-center justify-center overflow-hidden px-4 py-12">
-      <StageMark />
-      <p className="absolute bottom-10 left-12 hidden font-display text-body-lg font-semibold text-text-muted lg:block">
-        {t("tagline")}
-      </p>
-      <main className="relative flex w-full max-w-[400px] flex-col items-center gap-7">{children}</main>
-    </div>
+    <main className="flex h-dvh flex-col items-center overflow-y-auto px-4 py-6 short:py-4">
+      <AuthStage className="relative isolate my-auto flex w-full max-w-[400px] flex-col items-center gap-5 sm:gap-6 short:gap-4">
+        {children}
+        <Peg />
+      </AuthStage>
+    </main>
   );
 }

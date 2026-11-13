@@ -29,24 +29,3 @@ export function Logo({ size = 32, label }: { size?: number; label: string }) {
     </span>
   );
 }
-
-/** Large tone-on-tone mark cropped in a corner. Decoration only. */
-export function StageMark() {
-  const maskId = useId();
-  return (
-    <svg
-      viewBox="0 0 48 48"
-      aria-hidden="true"
-      focusable="false"
-      className="pointer-events-none absolute -right-[190px] -bottom-[150px] hidden size-[700px] text-mark-tint md:block"
-    >
-      <mask id={maskId}>
-        <rect width="48" height="48" fill="#fff" />
-        <rect x="29" y="23" width="8" height="10" fill="#000" />
-      </mask>
-      <circle cx="20" cy="28" r="14" mask={`url(#${maskId})`} fill="currentColor" />
-      <rect className="stage-mark-peg" x="30" y="24" width="4" height="8" fill="var(--accent)" />
-      <rect x="34" y="6" width="6" height="36" rx="3" fill="currentColor" />
-    </svg>
-  );
-}

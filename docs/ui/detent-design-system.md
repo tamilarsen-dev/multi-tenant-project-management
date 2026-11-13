@@ -1,6 +1,6 @@
 # Detent Design System
 
-Version 0.3 · working draft · November 12, 2026 · owner: project author
+Version 0.4 · working draft · November 12, 2026 · owner: project author
 
 ## 1. Purpose and how to use this document
 
@@ -8,7 +8,7 @@ This is the single reference for how Detent looks, sounds and moves. Design and 
 
 Status tags used throughout: **Decided** (chosen by the owner), **Proposed** (a default suggested during design work, not yet reviewed), **Open** (not decided yet).
 
-Change log: v0.3 (November 12, 2026): first implementation in `apps/web`. New role `mark-tint` and the workspace screens, empty, loading and error states are Proposed (section 10); translation library and font loading decided (section 12). v0.2 (November 9, 2026): the owner accepted every item that was Proposed in v0.1, so they are now Decided. Numeric values (motion timings, type scale, sizes) stay open to tuning during implementation. The auth screen direction was added (section 10) and the old side-panel auth layout was removed.
+Change log: v0.4 (November 12, 2026): the owner asked for a living character on the auth screens in Detent's own style. Peg, the joint's peg brought to life as a character that climbs the form, replaces the cropped decorative mark (section 10, Proposed); the auth screen fits one viewport; passwords get a show/hide toggle. The `mark-tint` role is withdrawn. v0.3 (November 12, 2026): first implementation in `apps/web`. A new role and the workspace screens, empty, loading and error states are Proposed (section 10); translation library and font loading decided (section 12). v0.2 (November 9, 2026): the owner accepted every item that was Proposed in v0.1, so they are now Decided. Numeric values (motion timings, type scale, sizes) stay open to tuning during implementation. The auth screen direction was added (section 10) and the old side-panel auth layout was removed.
 
 ## 2. Brand foundation
 
@@ -141,7 +141,6 @@ Accent is a medium violet leaning toward orchid: not dark, not neon. Neutrals ca
 | accent-soft (background) | #ECE2FF | #371B5B |
 | accent-ink (text on soft) | #562C8B | #D9C6FE |
 | on-accent (text on accent) | #FFFFFF | #0B0A10 |
-| mark-tint (decorative mark, Proposed) | #EFECF9 | #1B1A21 |
 
 **Task status colors.** Status is always shown with a word, never by color alone.
 
@@ -183,7 +182,7 @@ Use tabular figures for numbers in tables and counters. Body text never goes bel
 
 - **Spacing (Decided):** 4 px base. Scale: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64.
 - **Radius (Decided):** 10 px for controls, 14 to 16 px for cards and tiles, full for pills.
-- **Breakpoints (Decided):** the framework defaults (640, 768, 1024, 1280). Auth pages use a single centered column (max 400 px) at every width; the decorative large mark scales down or hides on small screens.
+- **Breakpoints (Decided):** the framework defaults (640, 768, 1024, 1280). Auth pages use a single centered column (max 400 px) at every width and fit one viewport without page scroll.
 - **Depth (Decided):** prefer borders over shadows. Elevation 1: 0 1px 2px rgba(20, 19, 25, 0.06). Elevation 2 (popovers, dragged cards): 0 8px 24px rgba(20, 19, 25, 0.12). In dark theme, depth comes from lighter surfaces and borders, not shadows.
 - **Density (Open):** a compact mode for the board and tables.
 
@@ -225,10 +224,20 @@ Every interactive component must define these states before it is built: default
 - A single centered column, 400 px wide, on the dark theme first (light version follows). The form is never pushed to one side.
 - Fields are joined tiles: each tile has a notch on its top edge and an accent peg that connects it to the tile above. The submit button is the last tile.
 - On focus, the peg above the focused tile seats 3 px lower (180 ms, click easing). The submit button presses down 2 px when active.
-- A large tone-on-tone mark sits cropped in a corner as decoration only (hidden from assistive technology). Its peg starts slightly retracted and clicks fully into the notch while any field has focus. This uses the CSS `:has()` selector, so verify browser support for the target audience, and provide a static fallback.
-- With reduced motion, all of these transitions are disabled.
+- **Peg (Proposed, v0.4)** is Detent's own character: the joint's peg at character size (120 × 144 px, accent, rounded-rectangle eyes, a mouth, two grip ridges), built from the brand geometry rather than borrowed from any mascot or illustration style. From 640 px it climbs the right edge of the form: its body hides behind the tiles, two grips hold the edge of a field, and it peeks round:
+  - idle: holds on beside the first field, blinks, follows the pointer;
+  - typing: climbs to the field (the grips take turns while it moves), leans in and reads along; each key makes it nod;
+  - password hidden: leans back and shuts its eyes; password shown: leans further back and looks up and away, whistling;
+  - submitting: climbs to the submit button and leans on it, and the button presses down;
+  - failed submit: shakes its head, mouth turned down; poked: bounces and grins.
+- Entrance: when the page appears, Peg peeks out from behind the submit button as if through a door, looks left and right, then jumps in an arc up to the first field and grabs its edge with a small squash. Any interaction cuts straight to the jump. Peg is never drawn before it has been placed, and the part of its body behind a field's edge is clipped, so it always appears to come from behind that edge.
+- Signing in, one flow into the app: on success Peg gives a happy hop (smiling eyes, wide grin) while the form fades and lifts, then leaps up and out of view; the app opens about 0.9 s later (at once with reduced motion). In the app, Peg hangs from a socket on the bottom edge of the header, just far enough to show its face, drops out of it on arrival and greets the user by first name in a small bubble ("Welcome back, Dana!", or "Welcome, Dana!" after creating an account) for about 3 seconds. It then stays: blinks, follows the pointer, grins when poked. It never hangs further than the page's top padding, so it covers no content.
+- Below 640 px there is no room beside the form, so a smaller Peg (60 px wide) hangs from a socket in a thin bar at the top of the screen, in the corner, with the same moods.
+- A 3 px ring in the page colour keeps Peg readable against the accent button. Peg is decoration only (hidden from assistive technology); everything it acts out is also stated in text. One animation frame loop writes transforms only.
+- With reduced motion, Peg moves straight to each spot, never tracks or bounces, and all transitions are disabled.
+- Password fields have a show/hide toggle (a text button with `aria-pressed`).
 - Sign in autocomplete values: email, current-password. Create account: name, email, new-password, with the 12 character rule shown under the password field.
-- Implemented in both themes; the light version reuses the same roles (Proposed). Below 768 px the decorative mark and tagline are hidden (Proposed).
+- Implemented in both themes; the light version reuses the same roles (Proposed). The column fits one viewport; it scrolls on its own only under zoom or on very small screens.
 
 **Workspace screens (Proposed, v0.3).** Built from existing tokens during M1; review before they become Decided.
 
