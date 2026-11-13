@@ -35,10 +35,10 @@ const CHAR_PX = 8.6;
 /** Lean (sideways peek) per mood, in px; negative leans in toward the form. */
 const LEAN: Record<Mood, number> = {
   idle: 0,
-  watch: -12,
+  watch: -4,
   shy: 22,
   "look-away": 34,
-  busy: -14,
+  busy: -6,
   sad: 6,
 };
 
@@ -229,10 +229,12 @@ function ClimbingPeg() {
       // No transform on the wrapper: that would make it a stacking context and
       // the body could no longer slip behind the tiles.
       body.style.transform = `translate(${(x + lean.value).toFixed(1)}px, ${y.value.toFixed(1)}px) rotate(${(shake.value + tilt).toFixed(2)}deg)`;
-      // Everything left of the field's edge is cut away, so Peg always comes out
-      // from behind that edge, however tall the tile is. In the air, nothing is cut.
+      // The part left of the field's edge is not drawn, and the cut is rounded
+      // like Peg's own corners, so it reads as a whole body beside the form rather
+      // than one sliced off. It also hides the body above and below short tiles
+      // (the submit "door"). In the air, nothing is cut.
       const behind = Math.max(0, TUCK - lean.value);
-      body.style.clipPath = flying ? "none" : `inset(-40px -40px -40px ${behind.toFixed(1)}px)`;
+      body.style.clipPath = flying ? "none" : `inset(0px 0px 0px ${behind.toFixed(1)}px round 30px 46px 46px 30px)`;
       // Grips appear as Peg comes out from behind the field; in the air it lets go.
       const out = flying ? 0 : Math.max(0, Math.min(1, (lean.value - HIDDEN_LEAN) / 40));
       hands.forEach((hand, i) => {
