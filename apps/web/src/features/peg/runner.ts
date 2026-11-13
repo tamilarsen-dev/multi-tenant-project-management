@@ -18,15 +18,24 @@ const sleep = (ms: number, signal: AbortSignal) =>
  * Plays steps in order. A newer run aborts this one (its animations stop and
  * the face resets). With reduced motion, moves are skipped, reaches apply at
  * once, and only mood holds remain (they change the face, not position).
+ * With reactions switched off in Preferences, moves are skipped too.
  */
-export async function runSteps(steps: Step[], peg: PegActor, reduced: boolean, signal: AbortSignal) {
+export type RunOptions = {
+  /** Reduced motion: reaches apply at once, moves are skipped. */
+  reduced: boolean;
+  /** Preferences → "Peg reacts" off: moves are skipped, reaches still play. */
+  react: boolean;
+};
+
+export async function runSteps(steps: Step[], peg: PegActor, options: RunOptions, signal: AbortSignal) {
+  const { reduced, react } = options;
   for (const step of steps) {
     if (signal.aborted) return;
     if ("reach" in step) {
       peg.setReach(step.reach);
       await sleep(reduced ? 0 : REACH_MS[step.reach], signal);
     } else if ("move" in step) {
-      if (reduced || !peg.actor) continue;
+      if (reduced || !react || !peg.actor) continue;
       const move = MOVES[step.move];
       peg.setMood(move.mood ?? null);
       const animation = peg.actor.animate(move.keyframes, { duration: move.duration, easing: move.easing });

@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 
 import { PegFigure } from "@/features/peg/peg-figure";
+import { usePreferences } from "@/features/preferences/preferences-provider";
+import { isReducedMotion } from "@/lib/preferences";
 
 import { useAuthStage, type Mood } from "./auth-stage";
 import { HangingPeg } from "./hanging-peg";
@@ -80,6 +82,11 @@ export function Peg() {
 
 function ClimbingPeg() {
   const { mood, focused } = useAuthStage();
+  const { follow, react } = usePreferences();
+  const prefs = useRef({ follow, react });
+  useEffect(() => {
+    prefs.current = { follow, react };
+  }, [follow, react]);
   const root = useRef<HTMLDivElement>(null);
   const moodRef = useRef<Mood>(mood);
 
@@ -95,7 +102,9 @@ function ClimbingPeg() {
     const body = peg.querySelector<HTMLElement>(".climber__body")!;
     const hands = Array.from(peg.querySelectorAll<HTMLElement>(".climber__hand"));
     const pupils = Array.from(peg.querySelectorAll<HTMLElement>(".peg-fig__pupil"));
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = isReducedMotion();
+    // "Peg reacts" off: no door, no jump; it simply slides out by the first field.
+    const quiet = !prefs.current.react;
 
     const pointer = { x: 0, y: 0, active: false };
     const y = { value: 0, v: 0 };
@@ -105,7 +114,7 @@ function ClimbingPeg() {
     let climbPhase = 0;
     let started = false;
     const mountedAt = performance.now();
-    let introDone = reduced;
+    let introDone = reduced || quiet;
     let jump: { start: number; fromY: number; fromLean: number } | null = null;
     let exit: { start: number; fromY: number; fromLean: number } | null = null;
     let successAt: number | null = null;
@@ -133,7 +142,7 @@ function ClimbingPeg() {
       pokeTimer = setTimeout(() => peg.removeAttribute("data-poked"), 700);
     };
     const onMood = (e: Event) => {
-      if ((e as CustomEvent<Mood>).detail === "sad") shake.v += 420;
+      if ((e as CustomEvent<Mood>).detail === "sad" && prefs.current.react) shake.v += 420;
     };
     window.addEventListener("pointermove", onMove, { passive: true });
     column.addEventListener("input", onKey);
@@ -163,7 +172,7 @@ function ClimbingPeg() {
           return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
         }
       }
-      return pointer.active ? pointer : null;
+      return pointer.active && prefs.current.follow ? pointer : null;
     };
 
     const render = (now: number) => {
@@ -199,7 +208,7 @@ function ClimbingPeg() {
         lean.value = reduced ? tl : HIDDEN_LEAN;
         lean.v = 0;
         started = true;
-      } else if (m === "success") {
+      } else if (m === "success" && prefs.current.react) {
         successAt ??= now;
         const ts = now - successAt;
         if (ts < EXIT_BOUNCE_MS) {

@@ -7,12 +7,14 @@ import { AppPeg } from "@/features/peg/app-peg";
 import { PegLink } from "@/features/peg/peg-link";
 import { PegPage, PegProvider } from "@/features/peg/peg-provider";
 import { getCurrentUser } from "@/lib/server/auth";
+import { readPreferences } from "@/lib/server/preferences";
 import { readTheme } from "@/lib/server/theme";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [user, theme, t, common] = await Promise.all([
+  const [user, theme, preferences, t, common] = await Promise.all([
     getCurrentUser(),
     readTheme(),
+    readPreferences(),
     getTranslations("nav"),
     getTranslations("common"),
   ]);
@@ -34,9 +36,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="flex flex-wrap items-center gap-4">
             <ThemeMenu current={theme} />
             <span className="hidden text-label text-text-muted sm:inline">{t("signedInAs", { name: user.displayName })}</span>
+            <PegLink
+              href="/preferences"
+              transition="forward"
+              className="inline-flex min-h-11 items-center rounded-control px-3 text-label font-semibold text-text hover:bg-surface-sunken"
+            >
+              {t("preferences")}
+            </PegLink>
             <SignOutButton label={t("signOut")} />
           </div>
-          <AppPeg name={user.displayName} />
+          {preferences.peg ? <AppPeg name={user.displayName} /> : null}
         </div>
       </header>
       <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6">

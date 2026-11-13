@@ -3,7 +3,9 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
+import { usePreferences } from "@/features/preferences/preferences-provider";
 import { GREET_KEY } from "@/lib/peg";
+import { isReducedMotion } from "@/lib/preferences";
 
 import type { PegMood, Reach } from "./motion";
 import { aimPupils, PegFigure } from "./peg-figure";
@@ -32,6 +34,11 @@ const MAX_STEP = 1 / 120;
 export function AppPeg({ name }: { name: string }) {
   const t = useTranslations("peg");
   const peg = usePeg();
+  const { follow, greet } = usePreferences();
+  const followRef = useRef(follow);
+  useEffect(() => {
+    followRef.current = follow;
+  }, [follow]);
   const root = useRef<HTMLDivElement>(null);
   const reach = useRef<Reach>("hidden");
   const [mood, setMood] = useState<PegMood | null>(null);
@@ -54,7 +61,7 @@ export function AppPeg({ name }: { name: string }) {
     } catch {
       // No storage: no greeting.
     }
-    const greets = kind === "signin" || kind === "signup";
+    const greets = greet && (kind === "signin" || kind === "signup");
     const first = name.trim().split(/\s+/)[0] ?? name;
     const timer = setTimeout(() => {
       if (greets) {
@@ -76,7 +83,7 @@ export function AppPeg({ name }: { name: string }) {
     if (!el) return;
     const body = el.querySelector<HTMLElement>(".app-peg__body")!;
     const pupils = Array.from(el.querySelectorAll<HTMLElement>(".peg-fig__pupil"));
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = isReducedMotion();
 
     const pointer = { x: 0, y: 0, active: false };
     const len = { value: 0, v: 0 };
@@ -108,7 +115,8 @@ export function AppPeg({ name }: { name: string }) {
       const target = LENGTH[reach.current];
       const box = el.getBoundingClientRect();
       const tipX = box.left + 35;
-      const swayTarget = pointer.active ? Math.max(-1, Math.min(1, (tipX - pointer.x) / 600)) * 6 : 0;
+      const tracking = pointer.active && followRef.current;
+      const swayTarget = tracking ? Math.max(-1, Math.min(1, (tipX - pointer.x) / 600)) * 6 : 0;
 
       if (reduced) {
         len.value = target;
@@ -128,7 +136,7 @@ export function AppPeg({ name }: { name: string }) {
       if (!reduced) {
         let lx = 0;
         let ly = 0;
-        if (pointer.active) {
+        if (tracking) {
           const dx = pointer.x - tipX;
           const dy = pointer.y - (box.top + len.value - 24);
           const d = Math.hypot(dx, dy) || 1;

@@ -686,3 +686,16 @@
     animation: none !important;
   }
 }
+
+/* The same, when the user chose "reduce" in Preferences. */
+[data-motion="reduce"] *,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Peg switched off in Preferences: belt and braces (layouts also skip rendering it). */
+[data-peg="hidden"] :is(.climber, .peg, .peg-bar, .app-peg) {
+  display: none !important;
+}

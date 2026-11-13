@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type ComponentProps } from "react";
 
 import { GREET_KEY, type Greeting } from "@/lib/peg";
+import { isReducedMotion } from "@/lib/preferences";
 
 import { useAuthStage, type StageField } from "./auth-stage";
 
@@ -147,7 +148,7 @@ export function useStageSignals(
       } catch {
         // Storage can be unavailable (private mode); the greeting is optional.
       }
-      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const reduced = isReducedMotion();
       const to = state.redirectTo;
       router.prefetch(to);
       const timer = setTimeout(() => router.replace(to), reduced ? 0 : EXIT_MS);

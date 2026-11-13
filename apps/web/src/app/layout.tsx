@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 
+import { PreferencesProvider } from "@/features/preferences/preferences-provider";
+import { readPreferences } from "@/lib/server/preferences";
 import { readTheme } from "@/lib/server/theme";
 
 import "./globals.css";
@@ -31,17 +33,21 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const [locale, theme] = await Promise.all([getLocale(), readTheme()]);
+  const [locale, theme, preferences] = await Promise.all([getLocale(), readTheme(), readPreferences()]);
 
   return (
     <html
       lang={locale}
       data-theme={theme === "system" ? undefined : theme}
+      data-motion={preferences.motion === "reduce" ? "reduce" : undefined}
+      data-peg={preferences.peg ? undefined : "hidden"}
       className={`${bricolage.variable} ${instrumentSans.variable}`}
     >
       {/* Browser extensions (e.g. Grammarly) add attributes to <body> before hydration. */}
       <body className="min-h-dvh bg-bg text-text" suppressHydrationWarning>
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          <PreferencesProvider value={preferences}>{children}</PreferencesProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

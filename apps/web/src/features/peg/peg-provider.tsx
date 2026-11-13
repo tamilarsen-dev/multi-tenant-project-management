@@ -3,6 +3,9 @@
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
+import { usePreferences } from "@/features/preferences/preferences-provider";
+import { isReducedMotion } from "@/lib/preferences";
+
 import { EXIT_BUDGET_MS, TRANSITIONS, type PageMotion, type TransitionName } from "./motion";
 import { runSteps, type PegActor } from "./runner";
 
@@ -27,11 +30,16 @@ type PegApi = {
 
 const PegContext = createContext<PegApi | null>(null);
 
-const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const reducedMotion = isReducedMotion;
 
 export function PegProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { react } = usePreferences();
+  const reactRef = useRef(react);
+  useEffect(() => {
+    reactRef.current = react;
+  }, [react]);
   const actor = useRef<PegActor | null>(null);
   const run = useRef<AbortController | null>(null);
   const pendingEnter = useRef<TransitionName | null>(null);
@@ -46,7 +54,7 @@ export function PegProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const steps = useCallback(async (list: Parameters<typeof runSteps>[0], signal: AbortSignal) => {
-    if (actor.current) await runSteps(list, actor.current, reducedMotion(), signal);
+    if (actor.current) await runSteps(list, actor.current, { reduced: reducedMotion(), react: reactRef.current }, signal);
   }, []);
 
   const play = useCallback(

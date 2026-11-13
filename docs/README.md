@@ -77,8 +77,9 @@ When two documents disagree, the owner wins and the other is corrected in the sa
 
 ## Change log
 
-### 2026-11-13 — Peg motion
+### 2026-11-13 — Peg motion and settings
 
+- Preferences page: show or hide Peg, pointer following, reactions, greeting, and motion (match device / reduce); "Hide Peg" on the sign-in screens.
 - Design system v0.5: Peg motion, one figure for every Peg, six moves, and named transitions (forward, back, create, save, error, theme, logout, greet) used by all in-app navigation and feedback (Proposed).
 - Architecture §4.1: `features/peg/`.
 
