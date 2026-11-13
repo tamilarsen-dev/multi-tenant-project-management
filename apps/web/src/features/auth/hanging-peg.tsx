@@ -94,6 +94,8 @@ export function HangingPeg() {
           return w * 0.68;
         case "look-away":
           return w * 0.32;
+        case "success":
+          return 0; // back up into its socket: off to the app
         case "busy":
           return reach(document.querySelector('[data-stage-field="submit"]'));
         case "watch":

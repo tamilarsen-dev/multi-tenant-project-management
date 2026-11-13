@@ -3,22 +3,24 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 /**
- * Shared state between the auth forms and the crew (design system §10, auth
+ * Shared state between the auth forms and Peg (design system §10, auth
  * stage). Focus is picked up by event delegation on the stage, so fields only
  * need a `data-stage-field` attribute; the forms report what they alone know:
  * pending submits, failed submits, and whether the password is shown.
  */
 
 export type StageField = "name" | "email" | "password" | "submit";
-export type Mood = "idle" | "watch" | "shy" | "look-away" | "busy" | "sad";
+export type Mood = "idle" | "watch" | "shy" | "look-away" | "busy" | "sad" | "success";
 
 type StageApi = {
   mood: Mood;
-  /** The focused field element, read every frame by the crew to aim its gaze. */
+  /** The focused field element, read every frame by Peg to aim its gaze. */
   focused: React.RefObject<HTMLElement | null>;
   setPending: (pending: boolean) => void;
   setRevealed: (revealed: boolean) => void;
   flashError: () => void;
+  /** Signed in: Peg celebrates and leaves for the app; the form fades out. */
+  celebrate: () => void;
 };
 
 const StageContext = createContext<StageApi | null>(null);
@@ -31,6 +33,8 @@ export function AuthStage({ children, className }: { children: React.ReactNode; 
   const [pending, setPending] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [error, setError] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const celebrate = useCallback(() => setSuccess(true), []);
   const errorTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const flashError = useCallback(() => {
@@ -55,13 +59,22 @@ export function AuthStage({ children, className }: { children: React.ReactNode; 
     }
   }, []);
 
-  const mood = deriveMood({ pending, error, field, revealed });
+  const mood = success ? "success" : deriveMood({ pending, error, field, revealed });
 
-  const api = useMemo(() => ({ mood, focused, setPending, setRevealed, flashError }), [mood, flashError]);
+  const api = useMemo(
+    () => ({ mood, focused, setPending, setRevealed, flashError, celebrate }),
+    [mood, flashError, celebrate],
+  );
 
   return (
     <StageContext.Provider value={api}>
-      <div className={className} data-auth-column="" onFocus={onFocus} onBlur={onBlur}>
+      <div
+        className={className}
+        data-auth-column=""
+        data-leaving={success ? "" : undefined}
+        onFocus={onFocus}
+        onBlur={onBlur}
+      >
         {children}
       </div>
     </StageContext.Provider>

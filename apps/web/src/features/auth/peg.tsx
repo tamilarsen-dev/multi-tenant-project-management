@@ -20,6 +20,8 @@ import { HangingPeg } from "./hanging-peg";
  * - busy: climbs down to the submit button and leans on it
  * - sad: a failed submit, it shakes its head
  * - poke it: it bounces and grins
+ * - success: a happy bounce, then it leaps up and out of view, on its way to
+ *   the app, where the header Peg greets you
  *
  * Below 640 px there is no room beside the form, so HangingPeg takes over.
  * Springs in one rAF loop write transforms only; decorative (aria-hidden).
@@ -40,6 +42,7 @@ const LEAN: Record<Mood, number> = {
   "look-away": 34,
   busy: -6,
   sad: 6,
+  success: 4,
 };
 
 /** Springs (per second): close to critically damped, so moves settle without wobbling. */
@@ -58,6 +61,9 @@ const INTRO = { peek: 350, lookLeft: 950, lookRight: 1350, jump: 1750 };
 const JUMP_MS = 560;
 const JUMP_HEIGHT = 70;
 const JUMP_OUT = 40;
+/** Signed in: a happy bounce, then Peg leaps up and out of view (it meets you in the app). */
+const EXIT_BOUNCE_MS = 340;
+const EXIT_LEAP_MS = 520;
 /** Integrate in small steps so a slow frame (dev mode, busy tab) never makes a jump. */
 const MAX_STEP = 1 / 120;
 
@@ -99,6 +105,8 @@ function ClimbingPeg() {
     const mountedAt = performance.now();
     let introDone = reduced;
     let jump: { start: number; fromY: number; fromLean: number } | null = null;
+    let exit: { start: number; fromY: number; fromLean: number } | null = null;
+    let successAt: number | null = null;
     let landTimer: ReturnType<typeof setTimeout> | undefined;
     let last = performance.now();
     let frame = 0;
@@ -166,7 +174,7 @@ function ClimbingPeg() {
 
       // Intro, before the jump: waiting at the "door" behind the submit button.
       const atDoor = !introDone && !jump && t < INTRO.jump && m === "idle";
-      const target = atDoor ? submitTile : targetTile(m);
+      const target = atDoor ? submitTile : m === "success" ? submitTile : targetTile(m);
       if (!target) return;
 
       const colBox = column.getBoundingClientRect();
@@ -189,6 +197,28 @@ function ClimbingPeg() {
         lean.value = reduced ? tl : HIDDEN_LEAN;
         lean.v = 0;
         started = true;
+      } else if (m === "success") {
+        successAt ??= now;
+        const ts = now - successAt;
+        if (ts < EXIT_BOUNCE_MS) {
+          if (ts < 20) y.v -= 520; // the happy hop
+          for (let left = dt; left > 0; left -= MAX_STEP) {
+            const h = Math.min(left, MAX_STEP);
+            y.v += (STIFF * (ty - y.value) - DAMP * y.v) * h;
+            y.value += y.v * h;
+            lean.v += (LEAN_STIFF * (tl - lean.value) - LEAN_DAMP * lean.v) * h;
+            lean.value += lean.v * h;
+          }
+        } else {
+          // The leap: accelerating up and out past the top of the screen.
+          exit ??= { start: now, fromY: y.value, fromLean: lean.value };
+          const p = Math.min((now - exit.start) / EXIT_LEAP_MS, 1);
+          const ease = p * p * (3 - 2 * p) * p;
+          y.value = exit.fromY - ease * (colBox.top + exit.fromY + BODY_H + 160);
+          lean.value = exit.fromLean + Math.sin(Math.PI * Math.min(p * 1.4, 1)) * 46;
+          tilt = -14 * Math.min(p * 2, 1);
+          flying = true;
+        }
       } else if (!introDone && !atDoor) {
         // The jump: a fixed arc from the door to the target field, out and up.
         jump ??= { start: now, fromY: y.value, fromLean: lean.value };
@@ -245,7 +275,7 @@ function ClimbingPeg() {
 
       // The submit button presses down while Peg leans on it.
       const submit = column.querySelector<HTMLElement>('[data-stage-field="submit"]');
-      submit?.toggleAttribute("data-pressed", m === "busy");
+      submit?.toggleAttribute("data-pressed", m === "busy" || m === "success");
 
       if (!reduced) {
         const box = body.getBoundingClientRect();

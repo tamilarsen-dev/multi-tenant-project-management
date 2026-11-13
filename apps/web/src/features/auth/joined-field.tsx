@@ -1,7 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, type ComponentProps } from "react";
+
+import { GREET_KEY, type Greeting } from "@/lib/peg";
 
 import { useAuthStage, type StageField } from "./auth-stage";
 
@@ -120,13 +123,37 @@ export function JoinedSubmit({ label, pendingLabel, pending }: { label: string; 
   );
 }
 
-/** Forms call this with their action state so the crew reacts to submits. */
-export function useStageSignals(pending: boolean, state: unknown, failed: boolean) {
-  const { setPending, flashError } = useAuthStage();
+/** Peg's exit takes this long before the app opens (design system §10). */
+export const EXIT_MS = 900;
+
+/**
+ * Forms call this with their action state: Peg reacts to pending and failed
+ * submits, and on success it celebrates and leaves before the app opens.
+ */
+export function useStageSignals(
+  pending: boolean,
+  state: { status: string; redirectTo?: string },
+  greeting: Greeting,
+) {
+  const { setPending, flashError, celebrate } = useAuthStage();
+  const router = useRouter();
   useEffect(() => setPending(pending), [pending, setPending]);
   useEffect(() => {
-    if (failed) flashError();
-    // Keyed on the action result object: one flash per failed submit.
+    if (state.status === "error") flashError();
+    if (state.status === "success" && state.redirectTo) {
+      celebrate();
+      try {
+        sessionStorage.setItem(GREET_KEY, greeting);
+      } catch {
+        // Storage can be unavailable (private mode); the greeting is optional.
+      }
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const to = state.redirectTo;
+      router.prefetch(to);
+      const timer = setTimeout(() => router.replace(to), reduced ? 0 : EXIT_MS);
+      return () => clearTimeout(timer);
+    }
+    // Keyed on the action result object: one reaction per submit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 }

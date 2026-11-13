@@ -404,6 +404,26 @@
     }
   }
 
+  /* success: happy eyes and a wide grin */
+  .climber[data-mood="success"] .climber__eye,
+  .peg[data-mood="success"] .peg__eye {
+    animation: none;
+    transform: scaleY(0.45) translateY(-3px);
+  }
+  .climber[data-mood="success"] .climber__mouth {
+    width: 28px;
+    height: 14px;
+  }
+
+  /* Signed in: everything but Peg fades and lifts away while it leaves. */
+  [data-auth-column][data-leaving] > :not(.climber, .peg, .peg-bar) {
+    opacity: 0;
+    translate: 0 -10px;
+    transition:
+      opacity 360ms var(--ease-standard) 120ms,
+      translate 360ms var(--ease-standard) 120ms;
+  }
+
   .climber[data-poked] .climber__mouth {
     width: 28px;
     height: 14px;
@@ -590,6 +610,138 @@
     90% {
       transform: scaleY(1);
     }
+  }
+
+  /*
+   * Peg in the app (app-peg.tsx): hangs from a socket on the header's bottom
+   * edge. The wrapper clips everything above that edge, so Peg comes out of
+   * the header. JS writes the body transform; moods here.
+   */
+  .app-peg {
+    position: absolute;
+    top: 100%;
+    left: calc(50% - 35px);
+    width: 210px;
+    height: 120px;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .app-peg__socket {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 2;
+    width: 70px;
+    height: 6px;
+    border-radius: 0 0 6px 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 0;
+  }
+
+  .app-peg__body {
+    position: absolute;
+    left: 7px;
+    top: 0;
+    width: 56px;
+    height: 120px;
+    border-radius: 0 0 22px 22px;
+    background: var(--accent);
+    transform-origin: 50% 0;
+    pointer-events: auto;
+    cursor: pointer;
+    will-change: transform;
+  }
+
+  .app-peg:not([data-ready]) .app-peg__body {
+    visibility: hidden;
+  }
+
+  .app-peg__face {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .app-peg__eyes {
+    display: flex;
+    gap: 6px;
+  }
+
+  .app-peg__eye {
+    position: relative;
+    width: 11px;
+    height: 15px;
+    border-radius: 5px;
+    background: #fff;
+    overflow: hidden;
+    transform-origin: 50% 50%;
+    animation: peg-blink 6.1s 1.3s infinite;
+    transition: transform 140ms var(--ease-standard);
+  }
+
+  .app-peg__pupil {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 6px;
+    height: 8px;
+    margin: -4px 0 0 -3px;
+    border-radius: 3px;
+    background: #141319;
+  }
+
+  .app-peg__mouth {
+    width: 11px;
+    height: 5px;
+    border: 2.5px solid var(--on-accent);
+    border-top: 0;
+    border-radius: 0 0 99px 99px;
+    transition:
+      width 160ms var(--ease-standard),
+      height 160ms var(--ease-standard);
+  }
+
+  .app-peg[data-poked] .app-peg__mouth,
+  .app-peg[data-greeting] .app-peg__mouth {
+    width: 16px;
+    height: 8px;
+  }
+  .app-peg[data-greeting] .app-peg__eye {
+    animation: none;
+    transform: scaleY(0.5) translateY(-2px);
+  }
+
+  .app-peg__bubble {
+    position: absolute;
+    left: 76px;
+    top: 16px;
+    max-width: 130px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    font-size: 13px;
+    line-height: 18px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateX(-6px) scale(0.92);
+    transform-origin: 0 50%;
+    transition:
+      opacity 200ms var(--ease-standard),
+      transform 260ms var(--ease-click);
+  }
+
+  .app-peg[data-greeting] .app-peg__bubble {
+    opacity: 1;
+    transform: none;
   }
 
   .skeleton {

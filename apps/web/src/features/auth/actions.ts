@@ -13,10 +13,20 @@ import { createAccountSchema, signInSchema } from "@/lib/validation";
 export type SignInField = "email" | "password";
 export type CreateAccountField = "displayName" | "email" | "password";
 
+/**
+ * A successful submit returns where to go instead of redirecting, so the page
+ * can play Peg's exit first (design system §10). The session cookie is already
+ * set when this comes back; the client navigates.
+ */
+export type AuthFormState<Field extends string> = FormState<Field> & { redirectTo?: string };
+
 const SIGN_IN_FIELDS = ["email", "password"] as const;
 const CREATE_ACCOUNT_FIELDS = ["displayName", "email", "password"] as const;
 
-export async function signIn(_prev: FormState<SignInField>, formData: FormData): Promise<FormState<SignInField>> {
+export async function signIn(
+  _prev: AuthFormState<SignInField>,
+  formData: FormData,
+): Promise<AuthFormState<SignInField>> {
   const raw = { email: text(formData, "email"), password: text(formData, "password") };
   const values = { email: raw.email };
 
@@ -35,13 +45,15 @@ export async function signIn(_prev: FormState<SignInField>, formData: FormData):
   }
 
   await storeSession(result.data.session);
-  redirect(safeNextPath(formData.get("next")));
+  // Values come back too: React resets the form after an action, and the
+  // fields should not blink empty while Peg's exit plays.
+  return { status: "success", redirectTo: safeNextPath(formData.get("next")), values };
 }
 
 export async function createAccount(
-  _prev: FormState<CreateAccountField>,
+  _prev: AuthFormState<CreateAccountField>,
   formData: FormData,
-): Promise<FormState<CreateAccountField>> {
+): Promise<AuthFormState<CreateAccountField>> {
   const raw = {
     displayName: text(formData, "displayName"),
     email: text(formData, "email"),
@@ -64,7 +76,7 @@ export async function createAccount(
   }
 
   await storeSession(result.data.session);
-  redirect("/workspaces/new");
+  return { status: "success", redirectTo: "/workspaces/new", values };
 }
 
 /** Revokes the session at the API, then clears the cookie even if the API call failed. */

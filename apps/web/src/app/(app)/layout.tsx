@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
+import { AppPeg } from "@/components/app/app-peg";
 import { ThemeMenu } from "@/components/app/theme-menu";
 import { Logo } from "@/components/logo";
 import { signOut } from "@/features/auth/actions";
@@ -23,8 +24,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       >
         {common("skipToContent")}
       </a>
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 sm:px-6">
+      <header className="relative z-10 border-b border-border bg-surface">
+        <div className="relative mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 sm:px-6">
           <Link href="/workspaces" aria-label={t("workspaces")} className="rounded-control">
             <Logo size={28} label={common("appName")} />
           </Link>
@@ -40,6 +41,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               </button>
             </form>
           </div>
+          <AppPeg name={user.displayName} />
         </div>
       </header>
       <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6">

@@ -5,17 +5,16 @@ import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import { FormAlert } from "@/components/form-alert";
-import type { FormState } from "@/lib/form-state";
 
-import { createAccount, type CreateAccountField } from "./actions";
+import { createAccount, type AuthFormState, type CreateAccountField } from "./actions";
 import { JoinedField, JoinedSubmit, useStageSignals } from "./joined-field";
 
-const initial: FormState<CreateAccountField> = { status: "idle" };
+const initial: AuthFormState<CreateAccountField> = { status: "idle" };
 
 export function CreateAccountForm() {
   const t = useTranslations("auth");
   const [state, action, pending] = useActionState(createAccount, initial);
-  useStageSignals(pending, state, state.status === "error");
+  useStageSignals(pending, state, "signup");
 
   return (
     <>
@@ -58,7 +57,7 @@ export function CreateAccountForm() {
           maxLength={128}
           required
         />
-        <JoinedSubmit label={t("createAccount.submit")} pendingLabel={t("createAccount.pending")} pending={pending} />
+        <JoinedSubmit label={t("createAccount.submit")} pendingLabel={t("createAccount.pending")} pending={pending || state.status === "success"} />
       </form>
       <p className="text-text-muted">
         {t("createAccount.switchPrompt")}{" "}

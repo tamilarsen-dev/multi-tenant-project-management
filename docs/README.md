@@ -79,7 +79,7 @@ When two documents disagree, the owner wins and the other is corrected in the sa
 
 ### 2026-11-12 — Peg
 
-- Design system v0.4: Peg, the joint's peg as a character that climbs the auth form (Proposed); the decorative mark and `mark-tint` withdrawn; auth fits one viewport; password show/hide.
+- Design system v0.4: Peg, the joint's peg as a character that climbs the auth form and carries the user into the app (Proposed); the decorative mark and `mark-tint` withdrawn; auth fits one viewport; password show/hide.
 
 ### 2026-11-12 — M1 web client
 
