@@ -230,6 +230,7 @@ Every interactive component must define these states before it is built: default
   - password hidden: leans back and shuts its eyes; password shown: leans further back and looks up and away, whistling;
   - submitting: climbs to the submit button and leans on it, and the button presses down;
   - failed submit: shakes its head, mouth turned down; poked: bounces and grins.
+- Entrance: when the page appears, Peg peeks out from behind the submit button as if through a door, looks left and right, then jumps in an arc up to the first field and grabs its edge with a small squash. Any interaction cuts straight to the jump. Peg is never drawn before it has been placed, and the part of its body behind a field's edge is clipped, so it always appears to come from behind that edge.
 - Below 640 px there is no room beside the form, so a smaller Peg (60 px wide) hangs from a socket in a thin bar at the top of the screen, in the corner, with the same moods.
 - A 3 px ring in the page colour keeps Peg readable against the accent button. Peg is decoration only (hidden from assistive technology); everything it acts out is also stated in text. One animation frame loop writes transforms only.
 - With reduced motion, Peg moves straight to each spot, never tracks or bounces, and all transitions are disabled.

@@ -42,8 +42,24 @@ const LEAN: Record<Mood, number> = {
   sad: 6,
 };
 
-const STIFF = 150;
-const DAMP = 15;
+/** Springs (per second): close to critically damped, so moves settle without wobbling. */
+const STIFF = 110;
+const DAMP = 19;
+const LEAN_STIFF = 130;
+const LEAN_DAMP = 19;
+/** Fully tucked behind the field: where Peg starts, before it peeks out. */
+const HIDDEN_LEAN = -(BODY_W - TUCK) - 8;
+/**
+ * The entrance, in ms after the page appears: Peg peeks out from behind the
+ * submit button as if through a door, looks left and right, then jumps up to
+ * the first field and grabs its edge. Any interaction cuts straight to the jump.
+ */
+const INTRO = { peek: 350, lookLeft: 950, lookRight: 1350, jump: 1750 };
+const JUMP_MS = 560;
+const JUMP_HEIGHT = 70;
+const JUMP_OUT = 40;
+/** Integrate in small steps so a slow frame (dev mode, busy tab) never makes a jump. */
+const MAX_STEP = 1 / 120;
 
 export function Peg() {
   return (
@@ -80,6 +96,10 @@ function ClimbingPeg() {
     const look = { x: 0, y: 0 };
     let climbPhase = 0;
     let started = false;
+    const mountedAt = performance.now();
+    let introDone = reduced;
+    let jump: { start: number; fromY: number; fromLean: number } | null = null;
+    let landTimer: ReturnType<typeof setTimeout> | undefined;
     let last = performance.now();
     let frame = 0;
     let pokeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -138,32 +158,69 @@ function ClimbingPeg() {
 
     const render = (now: number) => {
       if (getComputedStyle(peg).display === "none") return;
-      const dt = Math.min((now - last) / 1000, 1 / 30);
+      const dt = Math.min((now - last) / 1000, 1 / 15);
       last = now;
       const m = moodRef.current;
-      const target = targetTile(m);
+      const t = now - mountedAt;
+      const submitTile = column.querySelector<HTMLElement>('[data-stage-field="submit"]');
+
+      // Intro, before the jump: waiting at the "door" behind the submit button.
+      const atDoor = !introDone && !jump && t < INTRO.jump && m === "idle";
+      const target = atDoor ? submitTile : targetTile(m);
       if (!target) return;
 
       const colBox = column.getBoundingClientRect();
       const tileBox = target.getBoundingClientRect();
       const ty = tileBox.top - colBox.top + tileBox.height / 2 - BODY_H / 2;
-      const tl = LEAN[m];
+      const tl = atDoor && t < INTRO.peek ? HIDDEN_LEAN : LEAN[m];
       const x = tileBox.right - colBox.left - TUCK;
+      let tilt = 0;
+      let flying = false;
+      let introAim: { x: number; y: number } | null = null;
+      if (atDoor && t >= INTRO.lookLeft) {
+        const left = t < INTRO.lookRight;
+        introAim = { x: left ? colBox.left - 800 : colBox.right + 800, y: tileBox.top };
+      }
 
       if (!started || reduced) {
+        // First frame: already at the right height, tucked out of sight.
         y.value = ty;
         y.v = 0;
-        lean.value = tl;
+        lean.value = reduced ? tl : HIDDEN_LEAN;
         lean.v = 0;
         started = true;
+      } else if (!introDone && !atDoor) {
+        // The jump: a fixed arc from the door to the target field, out and up.
+        jump ??= { start: now, fromY: y.value, fromLean: lean.value };
+        const p = Math.min((now - jump.start) / JUMP_MS, 1);
+        const ease = p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2;
+        const arc = Math.sin(Math.PI * p);
+        y.value = jump.fromY + (ty - jump.fromY) * ease - arc * JUMP_HEIGHT;
+        lean.value = jump.fromLean + (tl - jump.fromLean) * ease + arc * JUMP_OUT;
+        tilt = -arc * 12;
+        flying = p > 0.06 && p < 0.94;
+        introAim = { x: tileBox.left + 40, y: tileBox.top };
+        if (p >= 1) {
+          introDone = true;
+          y.v = 0;
+          lean.v = -140; // grabbing the edge pulls it in a little
+          peg.setAttribute("data-landed", "");
+          clearTimeout(landTimer);
+          landTimer = setTimeout(() => peg.removeAttribute("data-landed"), 300);
+        }
       } else {
-        y.v += (STIFF * (ty - y.value) - DAMP * y.v) * dt;
-        y.value += y.v * dt;
-        lean.v += (STIFF * (tl - lean.value) - DAMP * lean.v) * dt;
-        lean.value += lean.v * dt;
-        shake.v += (-220 * shake.value - 9 * shake.v) * dt;
-        shake.value += shake.v * dt;
+        for (let left = dt; left > 0; left -= MAX_STEP) {
+          const h = Math.min(left, MAX_STEP);
+          y.v += (STIFF * (ty - y.value) - DAMP * y.v) * h;
+          y.value += y.v * h;
+          lean.v += (LEAN_STIFF * (tl - lean.value) - LEAN_DAMP * lean.v) * h;
+          lean.value += lean.v * h;
+          shake.v += (-220 * shake.value - 9 * shake.v) * h;
+          shake.value += shake.v * h;
+        }
       }
+
+      if (!peg.hasAttribute("data-ready")) peg.setAttribute("data-ready", "");
 
       // Climbing: grips take turns while Peg moves up or down.
       climbPhase += Math.min(Math.abs(y.v) * dt * 0.08, 0.6);
@@ -171,8 +228,15 @@ function ClimbingPeg() {
 
       // No transform on the wrapper: that would make it a stacking context and
       // the body could no longer slip behind the tiles.
-      body.style.transform = `translate(${(x + lean.value).toFixed(1)}px, ${y.value.toFixed(1)}px) rotate(${shake.value.toFixed(2)}deg)`;
+      body.style.transform = `translate(${(x + lean.value).toFixed(1)}px, ${y.value.toFixed(1)}px) rotate(${(shake.value + tilt).toFixed(2)}deg)`;
+      // Everything left of the field's edge is cut away, so Peg always comes out
+      // from behind that edge, however tall the tile is. In the air, nothing is cut.
+      const behind = Math.max(0, TUCK - lean.value);
+      body.style.clipPath = flying ? "none" : `inset(-40px -40px -40px ${behind.toFixed(1)}px)`;
+      // Grips appear as Peg comes out from behind the field; in the air it lets go.
+      const out = flying ? 0 : Math.max(0, Math.min(1, (lean.value - HIDDEN_LEAN) / 40));
       hands.forEach((hand, i) => {
+        hand.style.opacity = out.toFixed(2);
         const step = reduced ? 0 : Math.sin(climbPhase + i * Math.PI) * 6 * climbing;
         hand.style.transform = `translate(${x.toFixed(1)}px, ${(y.value + step).toFixed(1)}px)`;
       });
@@ -183,7 +247,7 @@ function ClimbingPeg() {
 
       if (!reduced) {
         const box = body.getBoundingClientRect();
-        const aim = aimFor(m, box);
+        const aim = introAim ?? aimFor(m, box);
         let lx = 0;
         let ly = 0;
         if (aim) {
@@ -209,6 +273,7 @@ function ClimbingPeg() {
     const cleanup = () => {
       cancelAnimationFrame(frame);
       clearTimeout(pokeTimer);
+      clearTimeout(landTimer);
       window.removeEventListener("pointermove", onMove);
       column.removeEventListener("input", onKey);
       body.removeEventListener("click", onPoke);

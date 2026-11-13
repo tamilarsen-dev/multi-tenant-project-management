@@ -242,6 +242,13 @@
     }
   }
 
+  /* Nothing shows until the first frame has placed Peg (no flash at the corner). */
+  .climber:not([data-ready]) .climber__body,
+  .climber:not([data-ready]) .climber__hand,
+  .peg:not([data-ready]) .peg__body {
+    visibility: hidden;
+  }
+
   .climber__body {
     position: absolute;
     left: 0;
@@ -379,6 +386,22 @@
 
   .climber[data-mood="sad"] .climber__mouth {
     transform: rotate(180deg);
+  }
+
+  /* Landing after the entrance jump: a squash on the individual `scale`
+     property, so it does not fight the transform JS writes every frame. */
+  .climber[data-landed] .climber__body {
+    animation: climber-land 300ms var(--ease-click);
+  }
+  .climber[data-landed] .climber__mouth {
+    width: 26px;
+    height: 13px;
+  }
+
+  @keyframes climber-land {
+    35% {
+      scale: 1.08 0.9;
+    }
   }
 
   .climber[data-poked] .climber__mouth {

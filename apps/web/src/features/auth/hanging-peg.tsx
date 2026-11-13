@@ -16,8 +16,9 @@ const COMPACT = 60;
 const CHAR_PX = 8.6;
 
 /** Spring constants (per second). */
-const STIFF = 140;
-const DAMP = 13;
+const STIFF = 110;
+const DAMP = 17;
+const MAX_STEP = 1 / 120;
 const SWAY_STIFF = 60;
 const SWAY_DAMP = 8;
 
@@ -121,7 +122,7 @@ export function HangingPeg() {
     };
 
     const render = (now: number) => {
-      const dt = Math.min((now - last) / 1000, 1 / 30);
+      const dt = Math.min((now - last) / 1000, 1 / 15);
       last = now;
       const m = moodRef.current;
       const { w, x, vh, wide } = layout();
@@ -129,12 +130,17 @@ export function HangingPeg() {
 
       const target = targetFor(m, w, vh, wide);
       if (!started || reduced) {
-        len.value = target;
+        // First frame: still inside its socket; it then lowers itself into view.
+        len.value = reduced ? target : 0;
         len.v = 0;
         started = true;
+        peg.setAttribute("data-ready", "");
       } else {
-        len.v += (STIFF * (target - len.value) - DAMP * len.v) * dt;
-        len.value += len.v * dt;
+        for (let left = dt; left > 0; left -= MAX_STEP) {
+          const h = Math.min(left, MAX_STEP);
+          len.v += (STIFF * (target - len.value) - DAMP * len.v) * h;
+          len.value += len.v * h;
+        }
       }
 
       // Sway toward what it is looking at (the bottom of the body swings toward it).
