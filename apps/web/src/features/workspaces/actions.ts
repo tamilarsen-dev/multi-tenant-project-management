@@ -21,10 +21,10 @@ function validationIssues(details: unknown) {
     : [];
 }
 
-export async function createWorkspace(
-  _prev: FormState<WorkspaceField>,
-  formData: FormData,
-): Promise<FormState<WorkspaceField>> {
+/** On success the client plays Peg's "create" transition, then opens the workspace. */
+export type CreateState = FormState<WorkspaceField> & { redirectTo?: string };
+
+export async function createWorkspace(_prev: CreateState, formData: FormData): Promise<CreateState> {
   const values = { name: text(formData, "name") };
   const parsed = workspaceNameSchema.safeParse(values);
   if (!parsed.success) {
@@ -43,7 +43,7 @@ export async function createWorkspace(
   }
 
   revalidatePath("/workspaces");
-  redirect(`/workspaces/${result.data.organization.id}`);
+  return { status: "success", redirectTo: `/workspaces/${result.data.organization.id}`, values };
 }
 
 export type RenameState = FormState<WorkspaceField> & { name?: string; version?: number };

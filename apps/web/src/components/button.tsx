@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { ComponentProps } from "react";
 
+import type { TransitionName } from "@/features/peg/motion";
+import { PegLink } from "@/features/peg/peg-link";
+
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 /** Design system §10: 48 px tall, radius 10, verb-first labels. */
@@ -24,10 +27,13 @@ export function Button({ variant = "primary", className = "", ...props }: Compon
   return <button className={buttonClass(variant, className)} {...props} />;
 }
 
+/** A link styled as a button. With `transition`, Peg moves with it (motion.ts). */
 export function ButtonLink({
   variant = "primary",
   className = "",
+  transition,
   ...props
-}: ComponentProps<typeof Link> & { variant?: Variant }) {
+}: ComponentProps<typeof Link> & { variant?: Variant; transition?: TransitionName }) {
+  if (transition) return <PegLink transition={transition} className={buttonClass(variant, className)} {...props} />;
   return <Link className={buttonClass(variant, className)} {...props} />;
 }

@@ -22,14 +22,14 @@ export default async function WorkspacesPage() {
           <h1 className="text-h1 font-bold">{t("title")}</h1>
           {total > 0 ? <p className="text-text-muted">{t("count", { count: total })}</p> : null}
         </div>
-        {total > 0 ? <ButtonLink href="/workspaces/new">{t("create")}</ButtonLink> : null}
+        {total > 0 ? <ButtonLink href="/workspaces/new" transition="forward">{t("create")}</ButtonLink> : null}
       </div>
 
       {total === 0 ? (
         <EmptyState
           title={t("empty.title")}
           body={t("empty.body")}
-          action={<ButtonLink href="/workspaces/new">{t("create")}</ButtonLink>}
+          action={<ButtonLink href="/workspaces/new" transition="forward">{t("create")}</ButtonLink>}
         />
       ) : (
         <WorkspaceList initialItems={page.items} initialCursor={page.pagination.nextCursor} />

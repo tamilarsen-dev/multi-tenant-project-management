@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
 
 import { ButtonLink } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
 import { Pill } from "@/components/role-pill";
+import { PegLink } from "@/features/peg/peg-link";
 import { canManage, getWorkspace } from "@/features/workspaces/api";
 
 export async function generateMetadata({ params }: PageProps<"/workspaces/[workspaceId]">): Promise<Metadata> {
@@ -24,10 +24,10 @@ export default async function WorkspacePage({ params }: PageProps<"/workspaces/[
   return (
     <div className="flex flex-col gap-8">
       <nav aria-label={t("nav.breadcrumb")}>
-        <Link href="/workspaces" className="text-label font-semibold text-accent-ink hover:underline">
+        <PegLink href="/workspaces" transition="back" className="text-label font-semibold text-accent-ink hover:underline">
           <span aria-hidden="true">← </span>
           {t("nav.workspaces")}
-        </Link>
+        </PegLink>
       </nav>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-3">
@@ -42,7 +42,7 @@ export default async function WorkspacePage({ params }: PageProps<"/workspaces/[
           </div>
         </div>
         {canManage(membership.role) ? (
-          <ButtonLink href={`/workspaces/${organization.id}/settings`} variant="secondary">
+          <ButtonLink href={`/workspaces/${organization.id}/settings`} variant="secondary" transition="forward">
             {t("workspaces.detail.settings")}
           </ButtonLink>
         ) : null}

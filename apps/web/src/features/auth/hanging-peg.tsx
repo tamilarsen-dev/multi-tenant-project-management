@@ -2,6 +2,10 @@
 
 import { useEffect, useRef } from "react";
 
+import { PegFigure } from "@/features/peg/peg-figure";
+import { usePreferences } from "@/features/preferences/preferences-provider";
+import { isReducedMotion } from "@/lib/preferences";
+
 import { useAuthStage, type Mood } from "./auth-stage";
 
 /**
@@ -25,6 +29,11 @@ const SWAY_DAMP = 8;
 /** Phone variant: hangs from the bar at the top, in the corner. */
 export function HangingPeg() {
   const { mood, focused } = useAuthStage();
+  const { follow, react } = usePreferences();
+  const prefs = useRef({ follow, react });
+  useEffect(() => {
+    prefs.current = { follow, react };
+  }, [follow, react]);
   const root = useRef<HTMLDivElement>(null);
   const moodRef = useRef<Mood>(mood);
 
@@ -38,8 +47,8 @@ export function HangingPeg() {
     const peg = root.current;
     if (!peg) return;
     const body = peg.querySelector<HTMLElement>(".peg__body")!;
-    const pupils = Array.from(peg.querySelectorAll<HTMLElement>(".peg__pupil"));
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const pupils = Array.from(peg.querySelectorAll<HTMLElement>(".peg-fig__pupil"));
+    const reduced = isReducedMotion();
 
     const pointer = { x: 0, y: 0, active: false };
     const len = { value: 0, v: 0 };
@@ -66,7 +75,7 @@ export function HangingPeg() {
       pokeTimer = setTimeout(() => peg.removeAttribute("data-poked"), 700);
     };
     const onMood = (e: Event) => {
-      if ((e as CustomEvent<Mood>).detail === "sad") sway.v += 140;
+      if ((e as CustomEvent<Mood>).detail === "sad" && prefs.current.react) sway.v += 140;
     };
 
     window.addEventListener("pointermove", onMove, { passive: true });
@@ -120,7 +129,7 @@ export function HangingPeg() {
           return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
         }
       }
-      return pointer.active ? pointer : null;
+      return pointer.active && prefs.current.follow ? pointer : null;
     };
 
     const render = (now: number) => {
@@ -223,19 +232,7 @@ export function HangingPeg() {
       <div ref={root} className="peg" data-mood={mood} aria-hidden="true">
         <span className="peg__socket" />
         <span className="peg__body">
-          <span className="peg__ridge" style={{ bottom: "calc(var(--peg-w) * 1.02)" }} />
-          <span className="peg__ridge" style={{ bottom: "calc(var(--peg-w) * 1.14)" }} />
-          <span className="peg__face">
-            <span className="peg__eyes">
-              <span className="peg__eye">
-                <span className="peg__pupil" />
-              </span>
-              <span className="peg__eye">
-                <span className="peg__pupil" />
-              </span>
-            </span>
-            <span className="peg__mouth" />
-          </span>
+          <PegFigure shape="hang" />
         </span>
       </div>
     </>

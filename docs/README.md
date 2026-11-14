@@ -77,6 +77,17 @@ When two documents disagree, the owner wins and the other is corrected in the sa
 
 ## Change log
 
+### 2026-11-14 — Brand assets
+
+- Logo and Peg as SVG and PNG in `apps/web/public/brand/`, generated from the app's own geometry (design system §4).
+- App icon in use as the favicon (`favicon.ico`, `icon.svg`, `apple-icon.png`).
+
+### 2026-11-13 — Peg motion and settings
+
+- Preferences page: show or hide Peg, pointer following, reactions, greeting, and motion (match device / reduce); "Hide Peg" on the sign-in screens.
+- Design system v0.5: Peg motion, one figure for every Peg, six moves, and named transitions (forward, back, create, save, error, theme, logout, greet) used by all in-app navigation and feedback (Proposed).
+- Architecture §4.1: `features/peg/`.
+
 ### 2026-11-12 — Peg
 
 - Design system v0.4: Peg, the joint's peg as a character that climbs the auth form and carries the user into the app (Proposed); the decorative mark and `mark-tint` withdrawn; auth fits one viewport; password show/hide.

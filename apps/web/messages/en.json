@@ -73,7 +73,8 @@
     "themeSystem": "System",
     "themeLight": "Light",
     "themeDark": "Dark",
-    "breadcrumb": "Breadcrumb"
+    "breadcrumb": "Breadcrumb",
+    "preferences": "Preferences"
   },
   "roles": {
     "OWNER": "Owner",
@@ -124,5 +125,45 @@
   "peg": {
     "helloBack": "Welcome back, {name}!",
     "helloNew": "Welcome, {name}!"
+  },
+  "preferences": {
+    "metaTitle": "Preferences",
+    "title": "Preferences",
+    "subtitle": "Make Detent feel right for you. Changes save as you make them and apply on this device.",
+    "pegTitle": "Peg",
+    "pegIntro": "Peg is the little helper that keeps you company on the sign-in screen and in the header.",
+    "peg": {
+      "label": "Show Peg",
+      "description": "Turn off to hide Peg everywhere, including the sign-in screen."
+    },
+    "follow": {
+      "label": "Follow my pointer",
+      "description": "Peg's eyes and body follow your mouse."
+    },
+    "react": {
+      "label": "Reactions",
+      "description": "Peg hops, nods, shakes its head, and waves when things happen."
+    },
+    "greet": {
+      "label": "Greet me after signing in",
+      "description": "A short hello from Peg when you arrive."
+    },
+    "motionTitle": "Motion",
+    "motionIntro": "Animations across Detent, including page transitions.",
+    "motion": {
+      "system": {
+        "label": "Match my device",
+        "description": "Full motion, unless your device asks for less."
+      },
+      "reduce": {
+        "label": "Reduce motion",
+        "description": "No movement or transitions. Changes happen instantly."
+      }
+    },
+    "saving": "Saving…",
+    "saved": "Saved.",
+    "failed": "Couldn't save that change. Try again.",
+    "hidePeg": "Hide Peg",
+    "showPeg": "Show Peg"
   }
 }
