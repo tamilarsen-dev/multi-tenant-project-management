@@ -85,7 +85,7 @@ def logo(t):
 def app_icon():
     c = THEMES["dark"]
     body = rrect(0, 0, 512, 512, 112, 112, 112, 112, c["bg"])
-    body += mark("dark", dx=256 - 23 * 7.6, dy=256 - 24 * 7.6, s=7.6)
+    body += mark("dark", dx=256 - 23 * 10.5, dy=256 - 24 * 10.5, s=10.5)
     return svg(512, 512, body, "Detent")
 
 # ---- Peg (.peg-fig in globals.css) ---------------------------------------

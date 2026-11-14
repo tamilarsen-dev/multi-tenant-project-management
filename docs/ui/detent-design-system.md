@@ -8,7 +8,7 @@ This is the single reference for how Detent looks, sounds and moves. Design and 
 
 Status tags used throughout: **Decided** (chosen by the owner), **Proposed** (a default suggested during design work, not yet reviewed), **Open** (not decided yet).
 
-Change log: v0.5 (November 14, 2026): brand asset files for the logo and Peg (section 4). (November 13, 2026): Peg settings (show, follow, reactions, greeting, motion) and Peg motion, one figure for every Peg, a vocabulary of six moves and a catalogue of named transitions for page changes and in-place feedback (section 10, Proposed). v0.4 (November 12, 2026): the owner asked for a living character on the auth screens in Detent's own style. Peg, the joint's peg brought to life as a character that climbs the form, replaces the cropped decorative mark (section 10, Proposed); the auth screen fits one viewport; passwords get a show/hide toggle. The `mark-tint` role is withdrawn. v0.3 (November 12, 2026): first implementation in `apps/web`. A new role and the workspace screens, empty, loading and error states are Proposed (section 10); translation library and font loading decided (section 12). v0.2 (November 9, 2026): the owner accepted every item that was Proposed in v0.1, so they are now Decided. Numeric values (motion timings, type scale, sizes) stay open to tuning during implementation. The auth screen direction was added (section 10) and the old side-panel auth layout was removed.
+Change log: v0.5 (November 14, 2026): brand asset files for the logo and Peg, and the app icon as favicon (section 4). (November 13, 2026): Peg settings (show, follow, reactions, greeting, motion) and Peg motion, one figure for every Peg, a vocabulary of six moves and a catalogue of named transitions for page changes and in-place feedback (section 10, Proposed). v0.4 (November 12, 2026): the owner asked for a living character on the auth screens in Detent's own style. Peg, the joint's peg brought to life as a character that climbs the form, replaces the cropped decorative mark (section 10, Proposed); the auth screen fits one viewport; passwords get a show/hide toggle. The `mark-tint` role is withdrawn. v0.3 (November 12, 2026): first implementation in `apps/web`. A new role and the workspace screens, empty, loading and error states are Proposed (section 10); translation library and font loading decided (section 12). v0.2 (November 9, 2026): the owner accepted every item that was Proposed in v0.1, so they are now Decided. Numeric values (motion timings, type scale, sizes) stay open to tuning during implementation. The auth screen direction was added (section 10) and the old side-panel auth layout was removed.
 
 ## 2. Brand foundation
 
@@ -95,13 +95,13 @@ Do not reveal whether the email or the password was the wrong one.
 | --- | --- |
 | `logo-mark.svg`, `logo-mark-dark.svg` | The mark on light and on dark (PNG 512 px) |
 | `logo.svg`, `logo-dark.svg` | Mark and wordmark; the wordmark is converted to outlines, so no font is needed (PNG 256 px tall) |
-| `app-icon.svg` | Proposed app icon: the dark mark on a rounded dark square (PNG 512 px) |
+| `app-icon.svg` | App icon: the dark mark on a rounded dark square, the mark enlarged so it still reads at 16 px (PNG 512 px). In use as the favicon (`src/app/favicon.ico` 16/32/48, `icon.svg`, `apple-icon.png` 180 px full-bleed) |
 | `peg.svg`, `peg-happy.svg`, `peg-wink.svg` (and `-dark`) | Peg's full figure in three moods (PNG 1024 px tall) |
 | `peg-hanging.svg` (and `-dark`) | Peg hanging from its socket, as in the app header |
 
-The files are generated from the same geometry the app draws (`components/logo.tsx`, the `.peg-fig` rules in `globals.css`). After changing either, regenerate them: `python3 apps/web/scripts/brand/generate-svg.py . apps/web/public/brand` (needs `fonttools`, `brotli`, `uharfbuzz`), then `node apps/web/scripts/brand/render-png.cjs apps/web/public/brand` (needs Playwright). Do not edit the files by hand.
+The files are generated from the same geometry the app draws (`components/logo.tsx`, the `.peg-fig` rules in `globals.css`). After changing either, regenerate them: `python3 apps/web/scripts/brand/generate-svg.py . apps/web/public/brand` (needs `fonttools`, `brotli`, `uharfbuzz`), then `node apps/web/scripts/brand/render-png.cjs apps/web/public/brand` (needs Playwright), then `python3 apps/web/scripts/brand/make-icons.py .` for the favicon set. Do not edit the files by hand.
 
-**Open:** a simplified variant for sizes below 24 px (wider gap, thicker peg), the favicon and app icon, and a final check that the gap stays readable at 16 px.
+**Open:** a simplified variant for sizes below 24 px (wider gap, thicker peg), and a final check on real screens that the gap stays readable at 16 px. The favicon and app icon are in place (Proposed, v0.5).
 
 ## 5. Color
 

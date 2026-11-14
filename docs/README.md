@@ -80,6 +80,7 @@ When two documents disagree, the owner wins and the other is corrected in the sa
 ### 2026-11-14 — Brand assets
 
 - Logo and Peg as SVG and PNG in `apps/web/public/brand/`, generated from the app's own geometry (design system §4).
+- App icon in use as the favicon (`favicon.ico`, `icon.svg`, `apple-icon.png`).
 
 ### 2026-11-13 — Peg motion and settings
 
