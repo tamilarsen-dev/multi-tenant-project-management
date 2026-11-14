@@ -77,6 +77,10 @@ When two documents disagree, the owner wins and the other is corrected in the sa
 
 ## Change log
 
+### 2026-11-14 — Brand assets
+
+- Logo and Peg as SVG and PNG in `apps/web/public/brand/`, generated from the app's own geometry (design system §4).
+
 ### 2026-11-13 — Peg motion and settings
 
 - Preferences page: show or hide Peg, pointer following, reactions, greeting, and motion (match device / reduce); "Hide Peg" on the sign-in screens.

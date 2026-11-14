@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="70" height="120" viewBox="0 0 70 120" role="img" aria-label="Peg">
+<title>Peg</title>
+<g transform="translate(7 0)"><path d="M0 0H56A0 0 0 0 1 56 0V92A28 28 0 0 1 28 120H28A28 28 0 0 1 0 92V0A0 0 0 0 1 0 0Z" fill="#a679ed"/><rect x="17" y="6.5" width="22" height="3.5" rx="2" fill="#c1a0fb" opacity="0.6"/><rect x="17" y="13.5" width="22" height="3.5" rx="2" fill="#c1a0fb" opacity="0.6"/>
+<g><rect x="6.5" y="64" width="17" height="25" rx="7" fill="#fff"/><rect x="10.58" y="70.75" width="8.84" height="11.5" rx="2.65" ry="3.45" fill="#141319"/></g>
+<g><rect x="32.5" y="64" width="17" height="25" rx="7" fill="#fff"/><rect x="36.58" y="70.75" width="8.84" height="11.5" rx="2.65" ry="3.45" fill="#141319"/></g>
+<path fill-rule="evenodd" fill="#0b0a10" d="M19.5 96H36.5V96A8 8 0 0 1 28.5 104H27.5A8 8 0 0 1 19.5 96ZM22.9 96H33.1V96A4.6 4.6 0 0 1 28.5 100.6H27.5A4.6 4.6 0 0 1 22.9 96Z"/>
+</g><path d="M0.5 -1H69.5A0 0 0 0 1 69.5 -1V0A6 6 0 0 1 63.5 6H6.5A6 6 0 0 1 0.5 0V-1A0 0 0 0 1 0.5 -1Z" fill="#1f1e25" stroke="#333239" stroke-width="1"/></svg>

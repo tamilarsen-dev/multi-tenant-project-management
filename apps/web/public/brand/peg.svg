@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="144" viewBox="0 0 120 144" role="img" aria-label="Peg">
+<title>Peg</title>
+<path d="M38.4 0H74.4A45.6 45.6 0 0 1 120 45.6V98.4A45.6 45.6 0 0 1 74.4 144H38.4A38.4 38.4 0 0 1 0 105.6V38.4A38.4 38.4 0 0 1 38.4 0Z" fill="#8b54d4"/>
+<rect x="79.2" y="15.6" width="26.4" height="4.2" rx="2" fill="#723eb5" opacity="0.6"/><rect x="79.2" y="24" width="26.4" height="4.2" rx="2" fill="#723eb5" opacity="0.6"/>
+<g><rect x="54" y="41.76" width="20.4" height="30" rx="8.4" fill="#fff"/><rect x="58.9" y="49.86" width="10.61" height="13.8" rx="3.18" ry="4.14" fill="#141319"/></g>
+<g><rect x="85.2" y="41.76" width="20.4" height="30" rx="8.4" fill="#fff"/><rect x="90.1" y="49.86" width="10.61" height="13.8" rx="3.18" ry="4.14" fill="#141319"/></g>
+<path fill-rule="evenodd" fill="#ffffff" d="M69.6 80.16H90V80.16A9.6 9.6 0 0 1 80.4 89.76H79.2A9.6 9.6 0 0 1 69.6 80.16ZM73.68 80.16H85.92V80.16A5.52 5.52 0 0 1 80.4 85.68H79.2A5.52 5.52 0 0 1 73.68 80.16Z"/>
+</svg>
