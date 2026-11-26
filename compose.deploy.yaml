@@ -16,8 +16,6 @@ services:
 
   api:
     image: mtpm-api:release-lab
-    ports:
-      - "3000:3000"
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -26,8 +24,37 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - default
+      - mtpm-net
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "192.168.45.2:8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - mtpm-net
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?TUNNEL_TOKEN is required}
+    restart: unless-stopped
+    networks:
+      - mtpm-net
 
 volumes:
   mtpm-deploy-pgdata:
     external: true
     name: mtpm-deploy-pgdata
+
+networks:
+  mtpm-net:
+    external: true
+    name: mtpm-net
